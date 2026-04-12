@@ -541,11 +541,13 @@
     position: relative;
   }
 
-  /* Left panel takes full width on mobile */
+  /* Left panel takes full width on mobile, stops above bottom nav */
   .leftPanel {
     width: 100%;
     max-width: 100%;
     flex: 1;
+    height: calc(100vh - var(--bottombar-height));
+    max-height: calc(100vh - var(--bottombar-height));
   }
 
   /* Right panel hidden by default on mobile */
