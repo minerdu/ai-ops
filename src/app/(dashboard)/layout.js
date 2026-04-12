@@ -216,23 +216,6 @@ export default function DashboardLayout({ children }) {
           />
         </div>
 
-        {/* Mobile Command Center Overlay: fixed panel above bottom nav */}
-        {showMobileCommandCenter && !selectedCustomerId && (
-          <div className={styles.mobileCommandOverlay}>
-            <div className={styles.rightTopBar}>
-              <div style={{ width: 44 }} />
-              <span className={styles.rightTopBarTitle}>运营指挥中心</span>
-              <div style={{ width: 44 }} />
-            </div>
-            <ChatPanel
-              key="command-center"
-              customerName={null}
-              customerId={null}
-              initialMessages={[]}
-            />
-          </div>
-        )}
-
         {/* Detail Panel Overlay Backdrop (mobile) */}
         {showDetailPanel && selectedCustomer && (
           <div className={styles.detailBackdrop} onClick={() => setShowDetailPanel(false)} />
@@ -245,6 +228,23 @@ export default function DashboardLayout({ children }) {
           </div>
         )}
       </div>
+
+      {/* Mobile Command Center Overlay — top level, not inside mainContent */}
+      {showMobileCommandCenter && !selectedCustomerId && (
+        <div className={styles.mobileCommandOverlay}>
+          <div className={styles.rightTopBar}>
+            <div style={{ width: 44 }} />
+            <span className={styles.rightTopBarTitle}>运营指挥中心</span>
+            <div style={{ width: 44 }} />
+          </div>
+          <ChatPanel
+            key="command-center"
+            customerName={null}
+            customerId={null}
+            initialMessages={[]}
+          />
+        </div>
+      )}
     </div>
   );
 }
