@@ -28,6 +28,7 @@ const navItems = [
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const [showDetailPanel, setShowDetailPanel] = useState(true);
+  const [showMobileCommandCenter, setShowMobileCommandCenter] = useState(false);
 
   // Use individual selectors to avoid creating new refs
   const selectedCustomerId = useStore(s => s.selectedCustomerId);
@@ -110,7 +111,7 @@ export default function DashboardLayout({ children }) {
 
       <div className={styles.mainContent}>
         {/* Left Panel */}
-        <div className={`${styles.leftPanel} ${selectedCustomerId ? styles.leftPanelHiddenMobile : ''}`}>
+        <div className={`${styles.leftPanel} ${selectedCustomerId ? styles.leftPanelHiddenMobile : ''} ${showMobileCommandCenter ? styles.leftPanelCommandMobileHidden : ''}`}>
           {/* Top Bar */}
           <div className={styles.topBar}>
             <div className={styles.topBarLeft}>
@@ -130,24 +131,35 @@ export default function DashboardLayout({ children }) {
             {activeMainPanel === 'materials' && <MaterialsPanel />}
           </div>
 
+          {/* Mobile FAB for Command Center */}
+          {!selectedCustomerId && activeMainPanel === 'leads' && (
+            <button 
+              className={styles.mobileCommandFab}
+              onClick={() => setShowMobileCommandCenter(true)}
+              title="运营指挥中心"
+            >
+              ✨
+            </button>
+          )}
+
           {/* Bottom Navigation */}
           <nav className={styles.bottomNav}>
             <button
-              onClick={() => { setActiveMainPanel('leads'); clearSelection(); }}
+              onClick={() => { setActiveMainPanel('leads'); clearSelection(); setShowMobileCommandCenter(false); }}
               className={`${styles.navItem} ${activeMainPanel === 'leads' ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>🔗</span>
               <span className={styles.navLabel}>线索</span>
             </button>
             <button
-              onClick={() => { setActiveMainPanel('workflow'); clearSelection(); }}
+              onClick={() => { setActiveMainPanel('workflow'); clearSelection(); setShowMobileCommandCenter(false); }}
               className={`${styles.navItem} ${activeMainPanel === 'workflow' ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>📋</span>
               <span className={styles.navLabel}>工作流</span>
             </button>
             <button
-              onClick={() => { setActiveMainPanel('tasks'); clearSelection(); }}
+              onClick={() => { setActiveMainPanel('tasks'); clearSelection(); setShowMobileCommandCenter(false); }}
               className={`${styles.navItem} ${activeMainPanel === 'tasks' ? styles.active : ''}`}
             >
               <div className={styles.navIconWrapper}>
@@ -157,14 +169,14 @@ export default function DashboardLayout({ children }) {
               <span className={styles.navLabel}>审批</span>
             </button>
             <button
-              onClick={() => { setActiveMainPanel('materials'); clearSelection(); }}
+              onClick={() => { setActiveMainPanel('materials'); clearSelection(); setShowMobileCommandCenter(false); }}
               className={`${styles.navItem} ${activeMainPanel === 'materials' ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>🖼️</span>
               <span className={styles.navLabel}>素材</span>
             </button>
             <button
-              onClick={() => { setActiveMainPanel('settings'); clearSelection(); }}
+              onClick={() => { setActiveMainPanel('settings'); clearSelection(); setShowMobileCommandCenter(false); }}
               className={`${styles.navItem} ${activeMainPanel === 'settings' ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>⚙️</span>
@@ -175,7 +187,7 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Right Panel - AI Chat */}
-        <div className={`${styles.rightPanel} ${selectedCustomerId ? styles.rightPanelVisibleMobile : ''}`}>
+        <div className={`${styles.rightPanel} ${selectedCustomerId ? styles.rightPanelVisibleMobile : ''} ${showMobileCommandCenter ? styles.rightPanelCommandMobileVisible : ''}`}>
           <div className={styles.rightTopBar}>
             {selectedCustomer ? (
               <>
@@ -199,8 +211,15 @@ export default function DashboardLayout({ children }) {
               </>
             ) : (
               <>
-                <div style={{ width: 44 }} />
-                <span className={styles.rightTopBarTitle}>新对话</span>
+                {showMobileCommandCenter ? (
+                  <button className={`${styles.backBtnIOS} ${styles.mobileOnly}`} onClick={() => setShowMobileCommandCenter(false)}>
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span className={styles.backBtnText}>返回</span>
+                  </button>
+                ) : (
+                  <div style={{ width: 44 }} />
+                )}
+                <span className={styles.rightTopBarTitle}>运营能效中心</span>
                 <div style={{ width: 44 }} />
               </>
             )}
