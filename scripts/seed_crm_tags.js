@@ -159,13 +159,37 @@ function generateConsumptionRecords(profile) {
 function generateCrmJson(profile) {
   const consumptionRecords = generateConsumptionRecords(profile);
   
+  // 根据消费额推算合理的入会时长（月）
+  // V1: 3-6个月, V2: 6-12个月, V3: 12-24个月, V4: 18-30个月, V5: 24-36个月, V6: 36-48个月
+  const levelMonthsMap = { V1: [3, 6], V2: [6, 12], V3: [12, 24], V4: [18, 30], V5: [24, 36], V6: [36, 48] };
+  const [minMonths, maxMonths] = levelMonthsMap[profile.memberLevel] || [6, 12];
+  const memberMonths = minMonths + Math.floor(Math.random() * (maxMonths - minMonths + 1));
+  
+  // 到店次数: 平均每月2-3次, 合理范围
+  const avgVisitsPerMonth = 2 + Math.random() * 1.5;
+  const visitCount = Math.max(3, Math.floor(memberMonths * avgVisitsPerMonth));
+  
+  const memberSinceDate = new Date();
+  memberSinceDate.setMonth(memberSinceDate.getMonth() - memberMonths);
+  
+  const firstVisitDate = new Date(memberSinceDate);
+  firstVisitDate.setDate(firstVisitDate.getDate() - Math.floor(Math.random() * 14)); // 首次到店比入会稍早
+  
+  const lastVisitDate = new Date();
+  lastVisitDate.setDate(lastVisitDate.getDate() - Math.floor(Math.random() * 20));
+  
+  // 生日: 直接用当前年份减去年龄
+  const birthYear = new Date().getFullYear() - profile.age;
+  const birthMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+  const birthDay = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+  
   return {
     // 会员等级
     memberLevel: profile.memberLevel,
     totalSpent: profile.totalSpent,
-    visitCount: Math.floor(profile.totalSpent / 800) + Math.floor(Math.random() * 5),
-    firstVisitDate: (() => { const d = new Date(); d.setMonth(d.getMonth() - Math.floor(Math.random() * 24 + 6)); return d.toISOString().split('T')[0]; })(),
-    lastVisitDate: (() => { const d = new Date(); d.setDate(d.getDate() - Math.floor(Math.random() * 30)); return d.toISOString().split('T')[0]; })(),
+    visitCount: visitCount,
+    firstVisitDate: firstVisitDate.toISOString().split('T')[0],
+    lastVisitDate: lastVisitDate.toISOString().split('T')[0],
     
     // 基本信息
     basicInfo: {
@@ -174,7 +198,7 @@ function generateCrmJson(profile) {
       address: profile.address,
       skinType: profile.skinType,
       allergies: profile.allergies,
-      birthday: `${1970 + (new Date().getFullYear() - profile.age)}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+      birthday: `${birthYear}-${birthMonth}-${birthDay}`,
     },
     
     // 消费记录
@@ -192,7 +216,7 @@ function generateCrmJson(profile) {
     // 积分与权益
     points: Math.floor(profile.totalSpent * 0.1),
     availableCoupons: Math.floor(Math.random() * 3),
-    memberSince: (() => { const d = new Date(); d.setMonth(d.getMonth() - Math.floor(Math.random() * 36 + 3)); return d.toISOString().split('T')[0]; })(),
+    memberSince: memberSinceDate.toISOString().split('T')[0],
   };
 }
 
