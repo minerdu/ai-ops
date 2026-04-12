@@ -31,6 +31,9 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
       setShowMaterialPicker(false);
       setShowTaskCreator(false);
       setShowTransferModal(false);
+    } else if (initialMessages && initialMessages.length > 0) {
+      // Messages arrived async after customer was already selected
+      setMessages(initialMessages);
     }
   }, [customerId, initialMessages]);
 
