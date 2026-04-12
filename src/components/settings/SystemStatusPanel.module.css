@@ -1,0 +1,81 @@
+.container {
+  background: var(--color-bg-elevated, #1a1a2e);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-border-light, rgba(255,255,255,0.08));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.headerIcon {
+  font-size: 16px;
+}
+
+.headerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #e0e0e0);
+  flex: 1;
+}
+
+.refreshBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.3s;
+}
+.refreshBtn:hover {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+.statusGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.statusItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--color-bg-card, rgba(255,255,255,0.04));
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+.statusItem:hover {
+  background: var(--color-bg-card-hover, rgba(255,255,255,0.07));
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.statusInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statusLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary, #e0e0e0);
+}
+
+.statusDetail {
+  font-size: 11px;
+  color: var(--color-text-tertiary, #888);
+}

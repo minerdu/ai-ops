@@ -1,0 +1,271 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// --------------------------------------------------------
+// 用户与配置
+// --------------------------------------------------------
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("operator") // admin, operator
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings PersonaSetting?
+}
+
+model PersonaSetting {
+  id             String   @id @default(uuid())
+  companyName    String   @default("企业名称")
+  roleDefinition String   @default("") // 角色定义与核心人设
+  taskWorkflow   String   @default("") // 具体任务与主工作流
+  edgeCases      String   @default("") // 特殊情况处理和答复示例
+  formatRules    String   @default("") // 输出格式与回复规范
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id])
+}
+
+// --------------------------------------------------------
+// 客户管理 (CRM)
+// --------------------------------------------------------
+
+model Customer {
+  id                String   @id @default(uuid())
+  name              String
+  avatar            String?
+  phone             String?
+  wechatId          String?  @unique
+  source            String   @default("wechat") // wechat, wework, manual
+  
+  // 运营属性
+  lifecycleStatus   String   @default("new") // new, following, trial, closed, silent
+  intentScore       Float    @default(0)   // 意向分 0-5
+  valueScore        Float    @default(0)   // 价值分 0-5
+  satisfactionScore Float    @default(0)   // 满意度 0-5
+  
+  silentDays        Int      @default(0)   // 沉默天数
+  aiSummary         String?  // AI摘要
+  lastInteractionAt DateTime?
+  lastKeyQuestion   String?
+  isGroup           Boolean  @default(false) // 区分单聊和群聊
+  crmHistory        String?  // JSON stringified CRM orders/history
+
+  assignedToId      String?
+
+  // 有赞 CRM 对接字段
+  youzanId          String?  @unique  // 有赞客户ID
+  youzanFansId      String?           // 有赞粉丝ID
+  memberLevel       String?           // 会员等级
+  totalSpent        Float    @default(0)  // 累计消费金额
+  orderCount        Int      @default(0)  // 订单数
+  lastOrderAt       DateTime?            // 最近下单时间
+  syncedAt          DateTime?            // 最近同步时间
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // 关联
+  tags          CustomerTag[]
+  conversations Conversation[]
+  tasks         Task[]
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  category  String   @default("custom") // custom, intent, lifecycle, risk
+  color     String   @default("#07C160")
+  createdAt DateTime @default(now())
+  
+  customers CustomerTag[]
+}
+
+model CustomerTag {
+  id         String   @id @default(uuid())
+  customerId String
+  tagId      String
+  addedBy    String   @default("system") // system, manual, ai
+  createdAt  DateTime @default(now())
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, tagId])
+}
+
+// --------------------------------------------------------
+// 会话与消息 (Chat)
+// --------------------------------------------------------
+
+model Conversation {
+  id             String   @id @default(uuid())
+  customerId     String
+  status         String   @default("active") // active, closed
+  aiMode         Boolean  @default(true)     // 是否AI自动托管
+  unreadCount    Int      @default(0)
+  lastMessageAt  DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messages       Message[]
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  externalMsgId  String?  @unique // 外部平台(如企微)的消息ID
+  
+  direction      String   // inbound(客户发来), outbound(发给客户)
+  senderType     String   // customer, ai, human
+  contentType    String   @default("text") // text, image, link, video
+  content        String
+  
+  status         String   @default("sent") // sent, delivered, read, failed
+  
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+// --------------------------------------------------------
+// 任务与运营 (Operations)
+// --------------------------------------------------------
+
+model Task {
+  id              String   @id @default(uuid())
+  customerId      String
+  
+  title           String
+  taskType        String   @default("text") // text, combo, call
+  content         String
+  
+  triggerSource   String   @default("manual") // manual, ai, sop, ai-sop
+  triggerReason   String?
+  
+  approvalStatus  String   @default("pending") // pending, approved, rejected
+  rejectReason    String?
+  reviewedBy      String?  // "ai" | "human" — 审核者标识
+  reviewNotes     String?  // 审核备注（AI审核理由/人工批注）
+  
+  executeStatus   String   @default("draft") // draft, scheduled, success, failed, cancelled
+  scheduledAt     DateTime?
+  executedAt      DateTime?
+  retryCount      Int      @default(0)  // 重试次数
+  maxRetries      Int      @default(3)  // 最大重试数
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model SopTemplate {
+  id               String   @id @default(uuid())
+  name             String
+  description      String?
+  icon             String   @default("✨")
+  isActive         Boolean  @default(true)
+  needApproval     Boolean  @default(true)
+  
+  // JSON formats for dynamic conditions & actions
+  // Removed Db.Json as sqlite doesn't support it well implicitly, String will work with parsing
+  triggerConditions String
+  actionDef        String
+  
+  statsTriggered   Int      @default(0)
+  statsApproved    Int      @default(0)
+  statsReplied     Int      @default(0)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Material {
+  id        String   @id @default(uuid())
+  title     String
+  type      String   // image, video, text, link
+  content   String
+  tags      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --------------------------------------------------------
+// AI 大模型接入配置
+// --------------------------------------------------------
+
+model AiModelConfig {
+  id           String   @id @default("default")
+  provider     String   @default("openai")     // openai, deepseek, zhipu, qwen, custom
+  apiBaseUrl   String   @default("")           // API 接入点 URL
+  apiKey       String   @default("")           // API Key
+  modelName    String   @default("")           // 模型名称，如 gpt-4o, deepseek-chat
+  temperature  Float    @default(0.7)          // 温度参数
+  maxTokens    Int      @default(800)          // 最大回复 token 数
+  systemPrompt String   @default("")           // 系统提示词（覆盖默认）
+  enabled      Boolean  @default(false)        // 是否启用真实 AI（false 则用 mock）
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// --------------------------------------------------------
+// 审计日志 (Audit Trail)
+// --------------------------------------------------------
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  entityType  String   // "task", "tag", "customer", "sop"
+  entityId    String
+  action      String   // "auto_approve", "manual_approve", "reject", "execute", "create"
+  operator    String   // "ai" | user id
+  reason      String?
+  metadata    String?  // JSON — 额外上下文
+  createdAt   DateTime @default(now())
+}
+
+// --------------------------------------------------------
+// 有赞 CRM 配置
+// --------------------------------------------------------
+
+model YouzanConfig {
+  id          String   @id @default("default")
+  appId       String   @default("")
+  appSecret   String   @default("")
+  accessToken String   @default("")
+  tokenExpiry DateTime?
+  shopId      String   @default("")
+  syncEnabled Boolean  @default(false)
+  syncInterval String  @default("daily") // hourly, daily, manual
+  lastSyncAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// --------------------------------------------------------
+// 安全规则引擎 (Safety Rules)
+// --------------------------------------------------------
+
+model SafetyRule {
+  id        String   @id @default(uuid())
+  ruleType  String   // "stop_keyword", "journey_block", "financial_keyword", "daily_limit"
+  value     String   // 规则值（关键词、旅程状态、数字等）
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,590 @@
+.dashboardLayout {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--color-bg-page);
+}
+
+/* Accounts Bar / Global Nav (Most Left) */
+.accountsBar {
+  width: 72px;
+  min-width: 72px;
+  background: #394559; /* Slate dark blue matching competitor */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) 0;
+  z-index: 200;
+  flex-shrink: 0;
+}
+
+.accountsTop, .accountsBottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.accountBadge {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-fast);
+  opacity: 0.7;
+}
+
+.accountBadge img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.accountBadge:hover, .accountActive {
+  opacity: 1;
+}
+
+.accountActive {
+  box-shadow: 0 0 0 2px #394559, 0 0 0 4px var(--color-primary);
+}
+
+.accountUnread {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  background: #ff4d4f;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 2;
+}
+
+.accountStatus {
+  position: absolute;
+  top: 0px;
+  left: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #394559;
+  z-index: 2;
+}
+
+.statusOnline {
+  background: #52c41a;
+}
+
+.statusOffline {
+  background: #ff4d4f;
+}
+
+.mainAccountDivider {
+  width: 40px;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: var(--space-1) 0;
+}
+
+.addAccountBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-circle);
+  border: 1px dashed rgba(255,255,255,0.3);
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addAccountBtn:hover {
+  border-color: white;
+  color: white;
+}
+
+.bottomIcon {
+  color: rgba(255,255,255,0.6);
+  font-size: 20px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottomIcon:hover {
+  color: white;
+}
+
+.mainContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left Panel - 功能区 */
+.leftPanel {
+  flex: 1;
+  width: 50%;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border-light);
+  background: var(--color-bg-card);
+  overflow: hidden;
+}
+
+.leftPanelContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Right Panel - AI对话区 */
+.rightPanel {
+  flex: 1;
+  width: 50%;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-card);
+  overflow: hidden;
+}
+
+/* Rightmost Panel - 详情侧边栏 */
+.detailPanelWrapper {
+  width: 320px;
+  min-width: 320px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--color-border-light);
+  background: var(--color-bg-card);
+  animation: slideInRight 0.3s ease forwards;
+}
+
+/* Top Bar */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-height);
+  padding: 0 var(--space-4);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.topBarAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-circle);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+.topBarName {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.topBarSource {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.topBarIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+  background: none;
+  text-decoration: none;
+}
+
+.topBarIcon:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.backBtnIOS {
+  display: inline-flex;
+  align-items: center;
+  color: #007aff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: -8px;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.backBtnText {
+  margin-left: -4px; /* Pull text closer to the chevron */
+  font-weight: 500;
+}
+
+/* Right Panel Top Bar */
+.rightTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-height);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+  gap: var(--space-3);
+}
+
+.rightTopBarTitle {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.rightTopBarCustomer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rightTopBarSub {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Persistent Sidebar Menu */
+.navSidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--color-bg-card);
+  border-right: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.navSidebarHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.navSidebarAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-circle);
+  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+.navSidebarInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navSidebarName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.navSidebarSub {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+
+.navSidebarItems {
+  padding: var(--space-3) 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.navSidebarItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.navSidebarItem:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-primary);
+}
+
+.navSidebarItem.active {
+  background: rgba(7, 193, 96, 0.08); /* Primary color low opacity */
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  border-right: 3px solid var(--color-primary);
+}
+
+.navSidebarIcon {
+  font-size: 20px;
+  width: 28px;
+  text-align: center;
+}
+
+.navSidebarBadge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  background: var(--color-red);
+  color: white;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.navSidebarDivider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: var(--space-2) var(--space-4);
+}
+
+/* Bottom Navigation */
+.bottomNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: var(--bottombar-height);
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  text-decoration: none;
+  position: relative;
+}
+
+.navItem:hover {
+  color: var(--color-text-secondary);
+}
+
+.navItem.active {
+  color: var(--color-primary);
+}
+
+.navIconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navIcon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.navBadge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--color-red);
+  color: white;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.navLabel {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Detail Backdrop (mobile overlay) */
+.detailBackdrop {
+  display: none;
+}
+
+/* ==================================
+ * Stage 4: Adaptive 3-Column Layout 
+ * ================================== */
+
+/* Tablet & smaller desktops: detail panel as overlay */
+@media (max-width: 1400px) {
+  .detailPanelWrapper {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 500;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.15);
+    animation: slideInRight 0.3s ease forwards;
+  }
+  .detailBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 499;
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+/* Mobile: stacked full-screen panels */
+@media (max-width: 768px) {
+  .accountsBar {
+    display: none;
+  }
+
+  .mainContent {
+    position: relative;
+  }
+
+  /* Left panel takes full width on mobile */
+  .leftPanel {
+    width: 100%;
+    max-width: 100%;
+    flex: 1;
+  }
+
+  /* Right panel hidden by default on mobile */
+  .rightPanel {
+    display: none;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* When customer is selected: hide left, show right */
+  .leftPanelHiddenMobile {
+    display: none;
+  }
+
+  .rightPanelVisibleMobile {
+    display: flex;
+    flex: 1;
+  }
+
+  /* Detail panel full screen on mobile */
+  .detailPanelWrapper {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    min-width: 100vw;
+    z-index: 500;
+    animation: slideInRight 0.25s ease forwards;
+  }
+
+  .detailBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 499;
+  }
+
+  /* Bottom nav always visible on mobile */
+  .bottomNav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 400;
+  }
+
+  .leftPanelContent {
+    padding-bottom: var(--bottombar-height);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
