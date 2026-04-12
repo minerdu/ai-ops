@@ -602,10 +602,6 @@
     display: none;
   }
   
-  .leftPanelCommandMobileHidden {
-    display: none !important;
-  }
-
   .rightPanelCommandMobileVisible {
     display: flex !important;
     position: fixed;
@@ -614,7 +610,7 @@
     right: 0;
     bottom: var(--bottombar-height);
     width: 100vw;
-    z-index: 350;
+    z-index: 390;
     flex-direction: column;
     animation: slideInRight 0.25s ease forwards;
     background: var(--color-bg-card);

@@ -111,7 +111,7 @@ export default function DashboardLayout({ children }) {
 
       <div className={styles.mainContent}>
         {/* Left Panel */}
-        <div className={`${styles.leftPanel} ${selectedCustomerId ? styles.leftPanelHiddenMobile : ''} ${showMobileCommandCenter ? styles.leftPanelCommandMobileHidden : ''}`}>
+        <div className={`${styles.leftPanel} ${selectedCustomerId ? styles.leftPanelHiddenMobile : ''}`}>
           {/* Top Bar */}
           <div className={styles.topBar}>
             <div className={styles.topBarLeft}>
