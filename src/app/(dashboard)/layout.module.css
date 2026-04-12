@@ -429,6 +429,8 @@
   border-top: 1px solid var(--color-border-light);
   flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  position: relative;
+  z-index: 400;
 }
 
 .navItem {
@@ -443,6 +445,8 @@
   transition: color var(--transition-fast);
   text-decoration: none;
   position: relative;
+  border: none;
+  background: transparent;
 }
 
 .navItem:hover {
