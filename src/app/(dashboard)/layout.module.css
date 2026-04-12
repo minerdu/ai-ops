@@ -492,6 +492,11 @@
   display: none;
 }
 
+/* Materials tab - show on desktop, hide on mobile (replaced by AI tab) */
+.navItemMaterials {
+  display: flex;
+}
+
 /* Detail Backdrop (mobile overlay) */
 .detailBackdrop {
   display: none;
@@ -591,6 +596,11 @@
   .navItemAi {
     display: flex;
   }
+
+  /* Hide materials on mobile (accessed via settings instead) */
+  .navItemMaterials {
+    display: none;
+  }
   
   .leftPanelCommandMobileHidden {
     display: none !important;
@@ -610,10 +620,6 @@
     background: var(--color-bg-card);
   }
 
-  /* AI tab highlight */
-  .navItemAi {
-    position: relative;
-  }
   .navItemAi.active .navIcon {
     transform: scale(1.15);
   }

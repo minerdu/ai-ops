@@ -1107,6 +1107,13 @@ export default function SettingsPage() {
               </div>
               <span className={styles.itemArrow}>›</span>
             </div>
+            <div className={styles.listItem} onClick={() => setActiveMainPanel('materials')}>
+              <div className={styles.itemLeft}>
+                <span className={styles.itemIcon}>🖼️</span>
+                <span className={styles.itemName}>运营素材</span>
+              </div>
+              <span className={styles.itemArrow}>›</span>
+            </div>
           </div>
         </div>
 

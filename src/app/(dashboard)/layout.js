@@ -130,50 +130,56 @@ export default function DashboardLayout({ children }) {
             {activeMainPanel === 'settings' && <SettingsPanel />}
             {activeMainPanel === 'materials' && <MaterialsPanel />}
           </div>
-
-          {/* Bottom Navigation */}
-          <nav className={styles.bottomNav}>
-            <button
-              onClick={() => { setActiveMainPanel('leads'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'leads' && !showMobileCommandCenter ? styles.active : ''}`}
-            >
-              <span className={styles.navIcon}>🔗</span>
-              <span className={styles.navLabel}>线索</span>
-            </button>
-            <button
-              onClick={() => { setActiveMainPanel('workflow'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'workflow' && !showMobileCommandCenter ? styles.active : ''}`}
-            >
-              <span className={styles.navIcon}>📋</span>
-              <span className={styles.navLabel}>工作流</span>
-            </button>
-            <button
-              onClick={() => { clearSelection(); setShowMobileCommandCenter(true); }}
-              className={`${styles.navItem} ${styles.navItemAi} ${showMobileCommandCenter ? styles.active : ''}`}
-            >
-              <span className={styles.navIcon}>🎯</span>
-              <span className={styles.navLabel}>AI指挥</span>
-            </button>
-            <button
-              onClick={() => { setActiveMainPanel('tasks'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'tasks' && !showMobileCommandCenter ? styles.active : ''}`}
-            >
-              <div className={styles.navIconWrapper}>
-                <span className={styles.navIcon}>✅</span>
-                {pendingTaskCount > 0 && <span className={styles.navBadge}>{pendingTaskCount}</span>}
-              </div>
-              <span className={styles.navLabel}>审批</span>
-            </button>
-            <button
-              onClick={() => { setActiveMainPanel('settings'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'settings' && !showMobileCommandCenter ? styles.active : ''}`}
-            >
-              <span className={styles.navIcon}>⚙️</span>
-              <span className={styles.navLabel}>我</span>
-            </button>
-          </nav>
-
         </div>
+
+        {/* Bottom Navigation - OUTSIDE leftPanel so it's always visible on mobile */}
+        <nav className={styles.bottomNav}>
+          <button
+            onClick={() => { setActiveMainPanel('leads'); clearSelection(); setShowMobileCommandCenter(false); }}
+            className={`${styles.navItem} ${activeMainPanel === 'leads' && !showMobileCommandCenter ? styles.active : ''}`}
+          >
+            <span className={styles.navIcon}>🔗</span>
+            <span className={styles.navLabel}>线索</span>
+          </button>
+          <button
+            onClick={() => { setActiveMainPanel('workflow'); clearSelection(); setShowMobileCommandCenter(false); }}
+            className={`${styles.navItem} ${activeMainPanel === 'workflow' && !showMobileCommandCenter ? styles.active : ''}`}
+          >
+            <span className={styles.navIcon}>📋</span>
+            <span className={styles.navLabel}>工作流</span>
+          </button>
+          <button
+            onClick={() => { clearSelection(); setShowMobileCommandCenter(true); }}
+            className={`${styles.navItem} ${styles.navItemAi} ${showMobileCommandCenter ? styles.active : ''}`}
+          >
+            <span className={styles.navIcon}>🎯</span>
+            <span className={styles.navLabel}>AI指挥</span>
+          </button>
+          <button
+            onClick={() => { setActiveMainPanel('tasks'); clearSelection(); setShowMobileCommandCenter(false); }}
+            className={`${styles.navItem} ${activeMainPanel === 'tasks' && !showMobileCommandCenter ? styles.active : ''}`}
+          >
+            <div className={styles.navIconWrapper}>
+              <span className={styles.navIcon}>✅</span>
+              {pendingTaskCount > 0 && <span className={styles.navBadge}>{pendingTaskCount}</span>}
+            </div>
+            <span className={styles.navLabel}>审批</span>
+          </button>
+          <button
+            onClick={() => { setActiveMainPanel('materials'); clearSelection(); setShowMobileCommandCenter(false); }}
+            className={`${styles.navItem} ${styles.navItemMaterials} ${activeMainPanel === 'materials' && !showMobileCommandCenter ? styles.active : ''}`}
+          >
+            <span className={styles.navIcon}>🖼️</span>
+            <span className={styles.navLabel}>素材</span>
+          </button>
+          <button
+            onClick={() => { setActiveMainPanel('settings'); clearSelection(); setShowMobileCommandCenter(false); }}
+            className={`${styles.navItem} ${activeMainPanel === 'settings' && !showMobileCommandCenter ? styles.active : ''}`}
+          >
+            <span className={styles.navIcon}>⚙️</span>
+            <span className={styles.navLabel}>我</span>
+          </button>
+        </nav>
 
         {/* Right Panel - AI Chat */}
         <div className={`${styles.rightPanel} ${selectedCustomerId ? styles.rightPanelVisibleMobile : ''} ${showMobileCommandCenter ? styles.rightPanelCommandMobileVisible : ''}`}>
