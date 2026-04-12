@@ -143,18 +143,24 @@ async function generateHistory() {
     // Smooth time spread out across the count
     const timeDelta = (7 * 24 * 60 * 60 * 1000) / count;
 
+    // Get or create conversation for customer
+    let conversation = await prisma.conversation.findFirst({ where: { customerId: c.id } });
+    if (!conversation) {
+      conversation = await prisma.conversation.create({ data: { customerId: c.id } });
+    }
+
     let inserts = [];
     for (let msg of messagesObj) {
       baseTime += timeDelta * (0.8 + Math.random() * 0.4); // Add some jitter
       inserts.push({
         id: crypto.randomUUID(),
-        customerId: c.id,
+        conversationId: conversation.id,
         direction: msg.role === 'ai' ? 'outbound' : 'inbound',
-        type: 'text',
+        contentType: 'text',
         content: msg.text,
-        senderId: msg.role === 'ai' ? 'robot' : msg.senderName, // mock sender string
-        timestamp: new Date(baseTime),
-        status: 'success'
+        senderType: msg.role === 'ai' ? 'ai' : 'customer',
+        createdAt: new Date(baseTime),
+        status: 'sent'
       });
     }
 
