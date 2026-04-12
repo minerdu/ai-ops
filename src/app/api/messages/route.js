@@ -22,12 +22,14 @@ export async function GET(request) {
 
     if (!conversations.length) return NextResponse.json([]);
 
-    // For simplicity, return messages of the most recent active conversation
+    // Return messages in the format ChatPanel expects
     const messages = conversations[conversations.length - 1].messages.map(m => ({
       id: m.id,
-      text: m.content,
-      sender: m.direction === 'inbound' ? 'user' : (m.senderType === 'human' ? 'human' : 'ai'),
-      time: m.createdAt.toISOString()
+      direction: m.direction,
+      senderType: m.senderType,
+      contentType: m.contentType,
+      content: m.content,
+      createdAt: m.createdAt.toISOString(),
     }));
 
     return NextResponse.json(messages);
@@ -75,9 +77,11 @@ export async function POST(request) {
     // Returning formatted for front-end
     return NextResponse.json({
       id: newMessage.id,
-      text: newMessage.content,
-      sender: newMessage.direction === 'inbound' ? 'user' : (newMessage.senderType === 'human' ? 'human' : 'ai'),
-      time: newMessage.createdAt.toISOString()
+      direction: newMessage.direction,
+      senderType: newMessage.senderType,
+      contentType: newMessage.contentType,
+      content: newMessage.content,
+      createdAt: newMessage.createdAt.toISOString(),
     });
 
   } catch (error) {

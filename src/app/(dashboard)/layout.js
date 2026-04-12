@@ -131,36 +131,32 @@ export default function DashboardLayout({ children }) {
             {activeMainPanel === 'materials' && <MaterialsPanel />}
           </div>
 
-          {/* Mobile FAB for Command Center */}
-          {!selectedCustomerId && activeMainPanel === 'leads' && (
-            <button 
-              className={styles.mobileCommandFab}
-              onClick={() => setShowMobileCommandCenter(true)}
-              title="运营指挥中心"
-            >
-              ✨
-            </button>
-          )}
-
           {/* Bottom Navigation */}
           <nav className={styles.bottomNav}>
             <button
               onClick={() => { setActiveMainPanel('leads'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'leads' ? styles.active : ''}`}
+              className={`${styles.navItem} ${activeMainPanel === 'leads' && !showMobileCommandCenter ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>🔗</span>
               <span className={styles.navLabel}>线索</span>
             </button>
             <button
               onClick={() => { setActiveMainPanel('workflow'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'workflow' ? styles.active : ''}`}
+              className={`${styles.navItem} ${activeMainPanel === 'workflow' && !showMobileCommandCenter ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>📋</span>
               <span className={styles.navLabel}>工作流</span>
             </button>
             <button
+              onClick={() => { clearSelection(); setShowMobileCommandCenter(true); }}
+              className={`${styles.navItem} ${styles.navItemAi} ${showMobileCommandCenter ? styles.active : ''}`}
+            >
+              <span className={styles.navIcon}>🎯</span>
+              <span className={styles.navLabel}>AI指挥</span>
+            </button>
+            <button
               onClick={() => { setActiveMainPanel('tasks'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'tasks' ? styles.active : ''}`}
+              className={`${styles.navItem} ${activeMainPanel === 'tasks' && !showMobileCommandCenter ? styles.active : ''}`}
             >
               <div className={styles.navIconWrapper}>
                 <span className={styles.navIcon}>✅</span>
@@ -169,15 +165,8 @@ export default function DashboardLayout({ children }) {
               <span className={styles.navLabel}>审批</span>
             </button>
             <button
-              onClick={() => { setActiveMainPanel('materials'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'materials' ? styles.active : ''}`}
-            >
-              <span className={styles.navIcon}>🖼️</span>
-              <span className={styles.navLabel}>素材</span>
-            </button>
-            <button
               onClick={() => { setActiveMainPanel('settings'); clearSelection(); setShowMobileCommandCenter(false); }}
-              className={`${styles.navItem} ${activeMainPanel === 'settings' ? styles.active : ''}`}
+              className={`${styles.navItem} ${activeMainPanel === 'settings' && !showMobileCommandCenter ? styles.active : ''}`}
             >
               <span className={styles.navIcon}>⚙️</span>
               <span className={styles.navLabel}>我</span>
@@ -211,15 +200,8 @@ export default function DashboardLayout({ children }) {
               </>
             ) : (
               <>
-                {showMobileCommandCenter ? (
-                  <button className={`${styles.backBtnIOS} ${styles.mobileOnly}`} onClick={() => setShowMobileCommandCenter(false)}>
-                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    <span className={styles.backBtnText}>返回</span>
-                  </button>
-                ) : (
-                  <div style={{ width: 44 }} />
-                )}
-                <span className={styles.rightTopBarTitle}>运营能效中心</span>
+                <div style={{ width: 44 }} />
+                <span className={styles.rightTopBarTitle}>运营指挥中心</span>
                 <div style={{ width: 44 }} />
               </>
             )}
