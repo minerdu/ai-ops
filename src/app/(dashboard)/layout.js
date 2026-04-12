@@ -17,17 +17,9 @@ import WorkflowPanel from '@/app/(dashboard)/workflow/page';
 import SettingsPanel from '@/app/(dashboard)/settings/page';
 import MaterialsPanel from '@/app/(dashboard)/materials/page';
 
-const navItems = [
-  { id: 'leads', icon: '🔗', label: '线索', badgeKey: null },
-  { id: 'workflow', icon: '📋', label: '工作流', badgeKey: null },
-  { id: 'tasks', icon: '✅', label: '审批', badgeKey: 'tasks' },
-  { id: 'materials', icon: '🖼️', label: '素材', badgeKey: null },
-  { id: 'settings', icon: '👤', label: '我', badgeKey: null },
-];
-
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
-  const [showDetailPanel, setShowDetailPanel] = useState(true);
+  const [showDetailPanel, setShowDetailPanel] = useState(false); // Default OFF on mobile
   const [showMobileCommandCenter, setShowMobileCommandCenter] = useState(false);
 
   // Use individual selectors to avoid creating new refs
@@ -58,6 +50,13 @@ export default function DashboardLayout({ children }) {
   const unreadSub1 = customers.filter(c => c.assignedToId === 'sub_1').reduce((acc, c) => acc + (c.unreadCount || 0), 0);
   const unreadSub2 = customers.filter(c => c.assignedToId === 'sub_2').reduce((acc, c) => acc + (c.unreadCount || 0), 0);
   const unreadSub3 = customers.filter(c => c.assignedToId === 'sub_3').reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+
+  // AI指挥 click handler: on desktop, just clear selection to show command center in right panel
+  // on mobile, trigger the overlay
+  const handleAiCommand = () => {
+    clearSelection();
+    setShowMobileCommandCenter(true);
+  };
 
   return (
     <div className={styles.dashboardLayout}>
@@ -130,63 +129,56 @@ export default function DashboardLayout({ children }) {
             {activeMainPanel === 'settings' && <SettingsPanel />}
             {activeMainPanel === 'materials' && <MaterialsPanel />}
           </div>
+
+          {/* Bottom Navigation — INSIDE leftPanel, always at bottom */}
+          <nav className={styles.bottomNav}>
+            <button
+              onClick={() => { setActiveMainPanel('leads'); clearSelection(); setShowMobileCommandCenter(false); }}
+              className={`${styles.navItem} ${activeMainPanel === 'leads' && !showMobileCommandCenter ? styles.active : ''}`}
+            >
+              <span className={styles.navIcon}>🔗</span>
+              <span className={styles.navLabel}>线索</span>
+            </button>
+            <button
+              onClick={() => { setActiveMainPanel('workflow'); clearSelection(); setShowMobileCommandCenter(false); }}
+              className={`${styles.navItem} ${activeMainPanel === 'workflow' && !showMobileCommandCenter ? styles.active : ''}`}
+            >
+              <span className={styles.navIcon}>📋</span>
+              <span className={styles.navLabel}>工作流</span>
+            </button>
+            <button
+              onClick={handleAiCommand}
+              className={`${styles.navItem} ${!selectedCustomerId && showMobileCommandCenter ? styles.active : ''}`}
+            >
+              <span className={styles.navIcon}>🎯</span>
+              <span className={styles.navLabel}>AI指挥</span>
+            </button>
+            <button
+              onClick={() => { setActiveMainPanel('tasks'); clearSelection(); setShowMobileCommandCenter(false); }}
+              className={`${styles.navItem} ${activeMainPanel === 'tasks' && !showMobileCommandCenter ? styles.active : ''}`}
+            >
+              <div className={styles.navIconWrapper}>
+                <span className={styles.navIcon}>✅</span>
+                {pendingTaskCount > 0 && <span className={styles.navBadge}>{pendingTaskCount}</span>}
+              </div>
+              <span className={styles.navLabel}>审批</span>
+            </button>
+            <button
+              onClick={() => { setActiveMainPanel('settings'); clearSelection(); setShowMobileCommandCenter(false); }}
+              className={`${styles.navItem} ${activeMainPanel === 'settings' && !showMobileCommandCenter ? styles.active : ''}`}
+            >
+              <span className={styles.navIcon}>⚙️</span>
+              <span className={styles.navLabel}>我</span>
+            </button>
+          </nav>
         </div>
 
-        {/* Bottom Navigation - OUTSIDE leftPanel so it's always visible on mobile */}
-        <nav className={styles.bottomNav}>
-          <button
-            onClick={() => { setActiveMainPanel('leads'); clearSelection(); setShowMobileCommandCenter(false); }}
-            className={`${styles.navItem} ${activeMainPanel === 'leads' && !showMobileCommandCenter ? styles.active : ''}`}
-          >
-            <span className={styles.navIcon}>🔗</span>
-            <span className={styles.navLabel}>线索</span>
-          </button>
-          <button
-            onClick={() => { setActiveMainPanel('workflow'); clearSelection(); setShowMobileCommandCenter(false); }}
-            className={`${styles.navItem} ${activeMainPanel === 'workflow' && !showMobileCommandCenter ? styles.active : ''}`}
-          >
-            <span className={styles.navIcon}>📋</span>
-            <span className={styles.navLabel}>工作流</span>
-          </button>
-          <button
-            onClick={() => { clearSelection(); setShowMobileCommandCenter(true); }}
-            className={`${styles.navItem} ${styles.navItemAi} ${showMobileCommandCenter ? styles.active : ''}`}
-          >
-            <span className={styles.navIcon}>🎯</span>
-            <span className={styles.navLabel}>AI指挥</span>
-          </button>
-          <button
-            onClick={() => { setActiveMainPanel('tasks'); clearSelection(); setShowMobileCommandCenter(false); }}
-            className={`${styles.navItem} ${activeMainPanel === 'tasks' && !showMobileCommandCenter ? styles.active : ''}`}
-          >
-            <div className={styles.navIconWrapper}>
-              <span className={styles.navIcon}>✅</span>
-              {pendingTaskCount > 0 && <span className={styles.navBadge}>{pendingTaskCount}</span>}
-            </div>
-            <span className={styles.navLabel}>审批</span>
-          </button>
-          <button
-            onClick={() => { setActiveMainPanel('materials'); clearSelection(); setShowMobileCommandCenter(false); }}
-            className={`${styles.navItem} ${styles.navItemMaterials} ${activeMainPanel === 'materials' && !showMobileCommandCenter ? styles.active : ''}`}
-          >
-            <span className={styles.navIcon}>🖼️</span>
-            <span className={styles.navLabel}>素材</span>
-          </button>
-          <button
-            onClick={() => { setActiveMainPanel('settings'); clearSelection(); setShowMobileCommandCenter(false); }}
-            className={`${styles.navItem} ${activeMainPanel === 'settings' && !showMobileCommandCenter ? styles.active : ''}`}
-          >
-            <span className={styles.navIcon}>⚙️</span>
-            <span className={styles.navLabel}>我</span>
-          </button>
-        </nav>
-
-        {/* Right Panel - AI Chat */}
+        {/* Right Panel - AI Chat / Command Center */}
         <div className={`${styles.rightPanel} ${selectedCustomerId ? styles.rightPanelVisibleMobile : ''} ${showMobileCommandCenter ? styles.rightPanelCommandMobileVisible : ''}`}>
           <div className={styles.rightTopBar}>
             {selectedCustomer ? (
               <>
-                <button className={styles.backBtnIOS} onClick={() => { clearSelection(); setShowDetailPanel(false); }}>
+                <button className={styles.backBtnIOS} onClick={() => { clearSelection(); setShowDetailPanel(false); setShowMobileCommandCenter(false); }}>
                   <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
                   <span className={styles.backBtnText}>返回</span>
                 </button>
@@ -197,11 +189,15 @@ export default function DashboardLayout({ children }) {
                   </span>
                 </div>
                 <button 
-                  className={styles.topBarIcon} 
-                  title="查看详情"
+                  className={styles.profileBtn} 
+                  title="客户画像"
                   onClick={() => setShowDetailPanel(!showDetailPanel)}
                 >
-                  📋
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  <span className={styles.profileBtnText}>客户画像</span>
                 </button>
               </>
             ) : (
@@ -219,6 +215,23 @@ export default function DashboardLayout({ children }) {
             initialMessages={selectedMessages}
           />
         </div>
+
+        {/* Mobile Command Center Overlay: fixed panel above bottom nav */}
+        {showMobileCommandCenter && !selectedCustomerId && (
+          <div className={styles.mobileCommandOverlay}>
+            <div className={styles.rightTopBar}>
+              <div style={{ width: 44 }} />
+              <span className={styles.rightTopBarTitle}>运营指挥中心</span>
+              <div style={{ width: 44 }} />
+            </div>
+            <ChatPanel
+              key="command-center"
+              customerName={null}
+              customerId={null}
+              initialMessages={[]}
+            />
+          </div>
+        )}
 
         {/* Detail Panel Overlay Backdrop (mobile) */}
         {showDetailPanel && selectedCustomer && (
