@@ -19,9 +19,13 @@ const levelColors = {
 };
 
 export default function CustomerDetail({ customerId, onClose }) {
-  const [descExpanded, setDescExpanded] = useState(false);
-  const [scoreExpanded, setScoreExpanded] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(true);
+  const [scoreExpanded, setScoreExpanded] = useState(true);
+  const [tagExpanded, setTagExpanded] = useState(true);
+  const [infoExpanded, setInfoExpanded] = useState(true);
+  const [prefExpanded, setPrefExpanded] = useState(true);
   const [crmExpanded, setCrmExpanded] = useState(false);
+  const [timelineExpanded, setTimelineExpanded] = useState(true);
   const [showTagModal, setShowTagModal] = useState(false);
   const [isRefreshingInsight, setIsRefreshingInsight] = useState(false);
   const toast = useToast();
@@ -80,7 +84,7 @@ export default function CustomerDetail({ customerId, onClose }) {
       <div className={styles.content}>
         <div className={styles.detailContent}>
 
-          {/* === Row 1: Level + Stats (compact horizontal) === */}
+          {/* === 0. Member Header === */}
           <div className={styles.memberHeader}>
             <div className={styles.memberBadge} style={{ background: levelStyle.bg, color: levelStyle.text, borderColor: levelStyle.border }}>
               <span className={styles.memberLevel}>{memberLevel}</span>
@@ -88,7 +92,7 @@ export default function CustomerDetail({ customerId, onClose }) {
             <div className={styles.memberStats}>
               <div className={styles.memberStatItem}>
                 <span className={styles.memberStatValue}>¥{(crm?.totalSpent || 0).toLocaleString()}</span>
-                <span className={styles.memberStatLabel}>消费</span>
+                <span className={styles.memberStatLabel}>总消费</span>
               </div>
               <div className={styles.memberStatItem}>
                 <span className={styles.memberStatValue}>{crm?.visitCount || 0}</span>
@@ -98,108 +102,150 @@ export default function CustomerDetail({ customerId, onClose }) {
                 <span className={styles.memberStatValue}>{crm?.points || 0}</span>
                 <span className={styles.memberStatLabel}>积分</span>
               </div>
-              <div className={styles.memberStatItem}>
-                <span className={styles.memberStatValue}>{messages.length}</span>
-                <span className={styles.memberStatLabel}>对话</span>
+            </div>
+          </div>
+
+          {/* === 1. AI Insight === */}
+          <div className={`${styles.sectionBlock} ${styles.themeAi}`}>
+            <div className={styles.sectionHeader} onClick={() => setDescExpanded(!descExpanded)}>
+              <span className={styles.sectionTitle}>🤖 AI 核心洞察</span>
+              <div className={styles.headerActions}>
+                <button 
+                  className={styles.iconBtn} 
+                  title="重新生成"
+                  onClick={(e) => { e.stopPropagation(); setIsRefreshingInsight(true); setTimeout(() => setIsRefreshingInsight(false), 1500); }}
+                >
+                  <span className={`${isRefreshingInsight ? styles.spin : ''}`}>🔄</span>
+                </button>
+                <span className={styles.expandIcon}>{descExpanded ? '▾' : '▸'}</span>
               </div>
             </div>
-          </div>
-
-          {/* === Row 2: Key Info (inline, no card wrapper) === */}
-          {crm?.basicInfo && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoChip}>📅 {crm.basicInfo.birthday}</span>
-              <span className={styles.infoChip}>👤 {crm.basicInfo.age}岁</span>
-              <span className={styles.infoChip}>💼 {crm.basicInfo.occupation}</span>
-              <span className={styles.infoChip}>📍 {crm.basicInfo.address}</span>
-              <span className={styles.infoChip}>🧴 {crm.basicInfo.skinType}</span>
-              {crm.basicInfo.allergies !== '无' && <span className={styles.infoChipWarn}>⚠️ {crm.basicInfo.allergies}</span>}
-              {crm.memberSince && <span className={styles.infoChip}>🎫 入会 {crm.memberSince}</span>}
-              {crm.lastVisitDate && <span className={styles.infoChip}>🕐 最近 {crm.lastVisitDate}</span>}
-            </div>
-          )}
-
-          {/* === Row 3: Preferences (compact horizontal) === */}
-          {crm?.preferences && (
-            <div className={styles.prefRow}>
-              <span className={styles.prefChip}>👩‍🔬 {crm.preferences.preferredTech}</span>
-              <span className={styles.prefChip}>🕐 {crm.preferences.preferredTime}</span>
-              <span className={styles.prefChip}>💬 {crm.preferences.communicationStyle}</span>
-              {crm.preferences.preferredProjects.map((p, i) => (
-                <span key={i} className={styles.prefChipPrimary}>{p}</span>
-              ))}
-            </div>
-          )}
-          {crm?.preferences?.notes && (
-            <div className={styles.noteBar}>📋 {crm.preferences.notes}</div>
-          )}
-
-          {/* === Row 4: Tags — flat, compact, inline flow === */}
-          <div className={styles.tagSection}>
-            <div className={styles.tagHeader}>
-              <span className={styles.tagTitle}>🏷️ 标签 ({customer.tags?.length || 0})</span>
-              <button className={styles.iconBtn} onClick={() => setShowTagModal(true)}>➕</button>
-            </div>
-            <div className={styles.tagFlow}>
-              {customer.tags && customer.tags.map((tag, i) => (
-                <span
-                  key={i}
-                  className={styles.tagChip}
-                  style={{ background: `${tag.color}15`, color: tag.color, borderColor: `${tag.color}30` }}
-                >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* === Row 5: AI Insight (collapsed by default) === */}
-          <div className={styles.collapseSection}>
-            <button className={styles.collapseBtn} onClick={() => setDescExpanded(!descExpanded)}>
-              <span>{descExpanded ? '▾' : '▸'} 🤖 AI 洞察</span>
-              <button 
-                className={styles.iconBtn} 
-                title="重新生成"
-                onClick={(e) => { e.stopPropagation(); setIsRefreshingInsight(true); setTimeout(() => setIsRefreshingInsight(false), 1500); }}
-              >
-                <span className={`${isRefreshingInsight ? styles.spin : ''}`}>🔄</span>
-              </button>
-            </button>
             {descExpanded && (
-              <div className={styles.collapseBody}>
-                {isRefreshingInsight ? '分析中...' : (customer.aiSummary || '暂无')}
+              <div className={styles.sectionBody}>
+                <div className={styles.aiText}>
+                  {isRefreshingInsight ? '正在重新生成 AI 洞察...' : (customer.aiSummary || '系统尚未生成AI洞察报告。')}
+                </div>
               </div>
             )}
           </div>
 
-          {/* === Row 6: Scores (collapsed by default) === */}
-          <div className={styles.collapseSection}>
-            <button className={styles.collapseBtn} onClick={() => setScoreExpanded(!scoreExpanded)}>
-              <span>{scoreExpanded ? '▾' : '▸'} 📊 评分</span>
-            </button>
+          {/* === 2. Scores === */}
+          <div className={`${styles.sectionBlock} ${styles.themeScore}`}>
+            <div className={styles.sectionHeader} onClick={() => setScoreExpanded(!scoreExpanded)}>
+              <span className={styles.sectionTitle}>📊 客户评分分析</span>
+              <span className={styles.expandIcon}>{scoreExpanded ? '▾' : '▸'}</span>
+            </div>
             {scoreExpanded && (
-              <div className={styles.collapseBody}>
+              <div className={styles.sectionBody}>
                 <div className={styles.scoreRow}>
                   {scores.map((s) => (
-                    <span key={s.label} className={styles.scoreBadge} style={{ background: `${s.color}12`, color: s.color }}>
+                    <span key={s.label} className={styles.scoreBadge} style={{ background: `${s.color}15`, color: s.color }}>
                       {s.label} {s.value.toFixed(1)}
                     </span>
                   ))}
                 </div>
                 <div className={styles.radarCenter}>
-                  <RadarChart scores={radarScores} size={120} />
+                  <RadarChart scores={radarScores} size={140} />
                 </div>
               </div>
             )}
           </div>
 
-          {/* === Row 7: Consumption Records (collapsed by default) === */}
-          <div className={styles.collapseSection}>
-            <button className={styles.collapseBtn} onClick={() => setCrmExpanded(!crmExpanded)}>
-              <span>{crmExpanded ? '▾' : '▸'} 💰 消费记录 ({crm?.consumptionRecords?.length || 0})</span>
-            </button>
+          {/* === 3. Tags === */}
+          <div className={`${styles.sectionBlock} ${styles.themeTag}`}>
+            <div className={styles.sectionHeader} onClick={() => setTagExpanded(!tagExpanded)}>
+              <span className={styles.sectionTitle}>🏷️ 客户多维标签 ({customer.tags?.length || 0})</span>
+              <div className={styles.headerActions}>
+                <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); setShowTagModal(true); }}>➕ 管理</button>
+                <span className={styles.expandIcon}>{tagExpanded ? '▾' : '▸'}</span>
+              </div>
+            </div>
+            {tagExpanded && (
+              <div className={styles.sectionBody}>
+                <div className={styles.tagFlow}>
+                  {customer.tags && customer.tags.map((tag, i) => (
+                    <span
+                      key={i}
+                      className={styles.tag}
+                      style={{ background: `${tag.color}15`, color: tag.color, borderColor: `${tag.color}30` }}
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                  {(!customer.tags || customer.tags.length === 0) && (
+                    <span className={styles.emptyText}>暂无标签</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* === 4. Basic Info === */}
+          {crm?.basicInfo && (
+            <div className={`${styles.sectionBlock} ${styles.themeInfo}`}>
+              <div className={styles.sectionHeader} onClick={() => setInfoExpanded(!infoExpanded)}>
+                <span className={styles.sectionTitle}>👤 基本资料</span>
+                <span className={styles.expandIcon}>{infoExpanded ? '▾' : '▸'}</span>
+              </div>
+              {infoExpanded && (
+                <div className={styles.sectionBody}>
+                  <div className={styles.infoFlow}>
+                    <div className={styles.infoPair}><span className={styles.lbl}>🎂 生日</span><span className={styles.val}>{crm.basicInfo.birthday}</span></div>
+                    <div className={styles.infoPair}><span className={styles.lbl}>👤 年龄</span><span className={styles.val}>{crm.basicInfo.age}岁</span></div>
+                    <div className={styles.infoPair}><span className={styles.lbl}>💼 职业</span><span className={styles.val}>{crm.basicInfo.occupation}</span></div>
+                    <div className={styles.infoPair}><span className={styles.lbl}>📍 住址</span><span className={styles.val}>{crm.basicInfo.address}</span></div>
+                    <div className={styles.infoPair}><span className={styles.lbl}>🧴 肤质</span><span className={styles.val}>{crm.basicInfo.skinType}</span></div>
+                    {crm.basicInfo.allergies !== '无' && (
+                      <div className={styles.infoPairWarn}><span className={styles.lbl}>⚠️ 过敏史</span><span className={styles.val}>{crm.basicInfo.allergies}</span></div>
+                    )}
+                    {crm.memberSince && <div className={styles.infoPair}><span className={styles.lbl}>🎫 入会日期</span><span className={styles.val}>{crm.memberSince}</span></div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* === 5. Preferences === */}
+          {crm?.preferences && (
+            <div className={`${styles.sectionBlock} ${styles.themePref}`}>
+              <div className={styles.sectionHeader} onClick={() => setPrefExpanded(!prefExpanded)}>
+                <span className={styles.sectionTitle}>💝 个性化偏好</span>
+                <span className={styles.expandIcon}>{prefExpanded ? '▾' : '▸'}</span>
+              </div>
+              {prefExpanded && (
+                <div className={styles.sectionBody}>
+                  <div className={styles.infoFlow}>
+                    <div className={styles.infoPair}><span className={styles.lbl}>👩‍🔬 首选技师</span><span className={styles.val}>{crm.preferences.preferredTech}</span></div>
+                    <div className={styles.infoPair}><span className={styles.lbl}>🕐 习惯时段</span><span className={styles.val}>{crm.preferences.preferredTime}</span></div>
+                    <div className={styles.infoPair}><span className={styles.lbl}>💬 沟通风格</span><span className={styles.val}>{crm.preferences.communicationStyle}</span></div>
+                  </div>
+                  <div className={styles.prefProjects}>
+                    <span className={styles.lbl}>重点高频项目：</span>
+                    <div className={styles.tagFlow}>
+                      {crm.preferences.preferredProjects.map((p, i) => (
+                        <span key={i} className={styles.prefChipPrimary}>{p}</span>
+                      ))}
+                    </div>
+                  </div>
+                  {crm.preferences.notes && (
+                    <div className={styles.noteBar}>
+                      <span className={styles.lbl}>📋 客户特别注意：</span>
+                      {crm.preferences.notes}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* === 6. Consumption Records === */}
+          <div className={`${styles.sectionBlock} ${styles.themeCrm}`}>
+            <div className={styles.sectionHeader} onClick={() => setCrmExpanded(!crmExpanded)}>
+              <span className={styles.sectionTitle}>💰 历次消费记录 ({crm?.consumptionRecords?.length || 0})</span>
+              <span className={styles.expandIcon}>{crmExpanded ? '▾' : '▸'}</span>
+            </div>
             {crmExpanded && (
-              <div className={styles.collapseBody}>
+              <div className={styles.sectionBody}>
                 {crm?.consumptionRecords && crm.consumptionRecords.length > 0 ? (
                   <div className={styles.crmList}>
                     {crm.consumptionRecords.map((record, index) => (
@@ -207,9 +253,9 @@ export default function CustomerDetail({ customerId, onClose }) {
                         <div className={styles.crmItemLeft}>
                           <div className={styles.crmProduct}>{record.product}</div>
                           <div className={styles.crmMeta}>
-                            {record.date}
-                            {record.technician && ` · ${record.technician}`}
-                            {record.satisfaction && ` · ${'⭐'.repeat(record.satisfaction)}`}
+                            <span className={styles.crmDate}>{record.date}</span>
+                            {record.technician && <span className={styles.crmTech}>服务: {record.technician}</span>}
+                            {record.satisfaction && <span className={styles.crmStar}>{'⭐'.repeat(record.satisfaction)}</span>}
                           </div>
                         </div>
                         <div className={styles.crmAmount}>¥{record.amount.toLocaleString()}</div>
@@ -217,44 +263,49 @@ export default function CustomerDetail({ customerId, onClose }) {
                     ))}
                   </div>
                 ) : (
-                  <div className={styles.emptyCrm}>暂无消费记录</div>
+                  <div className={styles.emptyText}>暂无详细消费记录</div>
                 )}
               </div>
             )}
           </div>
 
-          {/* === Row 8: AI Timeline (collapsed) === */}
-          <div className={styles.collapseSection}>
-            <button className={styles.collapseBtn} onClick={() => {}}>
-              <span>⚡ AI 执行记录</span>
-            </button>
-            <div className={styles.collapseBody}>
-              <div className={styles.timeline}>
-                <div className={styles.timelineItem}>
-                  <div className={styles.timelineDot}></div>
-                  <div className={styles.timelineContent}>
-                    <span className={styles.timelineTime}>今天 10:30</span>
-                    <span className={styles.timelineText}>AI 自动赋予 <b>[高意向]</b> 标签</span>
-                  </div>
-                </div>
-                {customer.intentScore >= 4.0 && (
+          {/* === 7. AI Timeline === */}
+          <div className={`${styles.sectionBlock} ${styles.themeTimeline}`}>
+            <div className={styles.sectionHeader} onClick={() => setTimelineExpanded(!timelineExpanded)}>
+              <span className={styles.sectionTitle}>⚡ AI 自动化执行记录</span>
+              <span className={styles.expandIcon}>{timelineExpanded ? '▾' : '▸'}</span>
+            </div>
+            {timelineExpanded && (
+              <div className={styles.sectionBody}>
+                <div className={styles.timeline}>
                   <div className={styles.timelineItem}>
-                    <div className={`${styles.timelineDot} ${styles.timelineDotWarn}`}></div>
+                    <div className={styles.timelineDot}></div>
+                    <div className={styles.timelineLine}></div>
                     <div className={styles.timelineContent}>
-                      <span className={styles.timelineTime}>昨天 18:20</span>
-                      <span className={styles.timelineText}>触发 SOP <b>"潜客激活"</b> 自动下发图文</span>
+                      <div className={styles.timelineTime}>今天 10:30</div>
+                      <div className={styles.timelineText}>AI系统自主研判赋能 <b>[高意向人群]</b> 阶段标签。</div>
                     </div>
                   </div>
-                )}
-                <div className={styles.timelineItem}>
-                  <div className={`${styles.timelineDot} ${styles.timelineDotGray}`}></div>
-                  <div className={styles.timelineContent}>
-                    <span className={styles.timelineTime}>昨天 16:45</span>
-                    <span className={styles.timelineText}>AI 自动接入并建立初始档案</span>
+                  {customer.intentScore >= 4.0 && (
+                    <div className={styles.timelineItem}>
+                      <div className={`${styles.timelineDot} ${styles.timelineDotWarn}`}></div>
+                      <div className={styles.timelineLine}></div>
+                      <div className={styles.timelineContent}>
+                        <div className={styles.timelineTime}>昨天 18:20</div>
+                        <div className={styles.timelineText}>SOP命中：<b>"高转化潜客激活"</b>预案，AI助理已自动发送朋友圈唤醒话术。</div>
+                      </div>
+                    </div>
+                  )}
+                  <div className={styles.timelineItem}>
+                    <div className={`${styles.timelineDot} ${styles.timelineDotGray}`}></div>
+                    <div className={styles.timelineContent}>
+                      <div className={styles.timelineTime}>昨天 16:45</div>
+                      <div className={styles.timelineText}>进入企业微信公海资源池，AI助理自动首次建档处理。</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
         </div>
@@ -264,20 +315,20 @@ export default function CustomerDetail({ customerId, onClose }) {
         <div className={styles.modalOverlay} onClick={() => setShowTagModal(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>打标签申请</h3>
+              <h3>审批流配置</h3>
               <button className={styles.iconBtn} onClick={() => setShowTagModal(false)}>✕</button>
             </div>
             <div className={styles.modalBody}>
               <div className={styles.tagInputRow}>
-                <input type="text" placeholder="输入标签名称（如：高净值）" className={styles.tagInput} />
+                <input type="text" placeholder="输入期望附带的标签名称（如：高净值）" className={styles.tagInput} />
               </div>
               <div className={styles.aiAnalysisBox}>
-                <h4>🤖 AI 分析评估</h4>
-                <p>当前未收集到足够特征，确定要申请添加并进入审核流吗？</p>
+                <h4>🤖 AI 自动化评估结果被驳回</h4>
+                <p>当前记录中并未收集到足够特征（未谈及资产、未见高单价历史行为），不足以支撑进入"高净值"自动营销闭环。继续提交需要管理层特批。是否提交特批？</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.cancelBtn} onClick={() => setShowTagModal(false)}>取消</button>
-                <button className={styles.submitBtn} onClick={() => { toast.success('已提交审批'); setShowTagModal(false); }}>提交</button>
+                <button className={styles.submitBtn} onClick={() => { toast.success('已提线索管理层特批池'); setShowTagModal(false); }}>请求特批</button>
               </div>
             </div>
           </div>
