@@ -1,4 +1,4 @@
-import { processIncomingMessage } from '@/lib/services/ai-service';
+import { handleIncomingMessage } from '@/lib/services/ai-service';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -86,7 +86,7 @@ export async function POST(req) {
     console.log(`[WeCom Webhook] Processing msg pipeline for ${customer.name} (${customerId})`);
     
     // Fire and forget (don't block the webhook response)
-    processIncomingMessage(customer.id, msg).catch(err => {
+    handleIncomingMessage(customer.id, msg).catch(err => {
       console.error(`[WeCom Webhook] Pipeline Error:`, err);
     });
 
