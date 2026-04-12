@@ -21,22 +21,50 @@ export async function POST(req) {
     const payload = await req.json();
     console.log(`\n[WeCom Webhook] Received payload:`, JSON.stringify(payload).substring(0, 500));
 
-    // 2. Parse Payload (handles private chat + group chat formats based on Bridge spec)
-    let customerId = payload.customerId;
-    let robotId = payload.robotId;
-    let msgId = payload.msgId;
-    let msg = payload.msg;
+    let customerId = payload.customerId || '';
+    let robotId = payload.robotId || '';
+    let msgId = payload.msgId || '';
+    let msg = payload.msg || '';
     let msgType = payload.msgType || payload.msgtype;
     let isGroup = false;
 
-    // Handle Group Callback format (400006)
-    if (payload.type === 400006 || payload.type === '400006') {
+    // Detect if this is an OpenClaw `/v1/responses` payload coming from the colleague's local Bridge
+    if (payload.model && payload.user && payload.input) {
+      console.log(`[WeCom Webhook] Detected OpenClaw JSON format from Bridge`);
+      
+      // Extract from user field: e.g. "openapi-private_wx123_robot456" or "openapi-group_12345"
+      const userStr = payload.user || '';
+      if (userStr.includes('private_')) {
+        const parts = userStr.split('private_')[1].split('_');
+        customerId = parts[0];
+        if (parts.length > 1) robotId = parts[1];
+      } else if (userStr.includes('group_')) {
+        customerId = userStr.split('group_')[1];
+        isGroup = true;
+      } else {
+        customerId = userStr.replace('openapi-', ''); // fallback
+      }
+
+      // Extract msg text from input blocks
+      const inputBlocks = payload.input || [];
+      for (const block of inputBlocks) {
+        if (block.content && Array.isArray(block.content)) {
+          for (const item of block.content) {
+            if (item.type === 'input_text' && item.text) {
+              msg += item.text + '\n';
+            }
+          }
+        }
+      }
+      msg = msg.trim();
+    } 
+    // Handle Raw Group Callback format (400006)
+    else if (payload.type === 400006 || payload.type === '400006') {
       const data = payload.data || {};
       customerId = data.sender_serial_no || '';
       robotId = data.wxId || data.robot_serial_no || payload.wxId || '';
       msgId = data.msg_id || data.msg_serial_no || '';
       
-      // Decode base64 msg_content
       if (data.msg_content) {
         try {
           msg = Buffer.from(data.msg_content, 'base64').toString('utf-8');
@@ -91,9 +119,14 @@ export async function POST(req) {
     });
 
     // 5. Return success immediately to provider
-    return new Response(JSON.stringify({ code: 0, message: 'success' }), {
+    const responsePayload = (payload.model && payload.user && payload.input)
+      ? { output: [{ type: "output_text", text: "NO_REPLY" }] }
+      : { code: 0, message: 'success' };
+
+    return new Response(JSON.stringify(responsePayload), {
       headers: { 'Content-Type': 'application/json' }
     });
+
 
   } catch (error) {
     console.error(`[WeCom Webhook] Parse Error:`, error);
