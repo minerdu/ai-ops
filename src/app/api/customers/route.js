@@ -61,8 +61,10 @@ export async function GET(request) {
       unreadCount: c.conversations.reduce((acc, conv) => acc + conv.unreadCount, 0),
       isGroup: c.isGroup,
       assignedToId: c.assignedToId,
+      memberLevel: c.memberLevel,
+      totalSpent: c.totalSpent,
       crmHistory: c.crmHistory ? JSON.parse(c.crmHistory) : null,
-      // Flat map tags array
+      // Flat map tags array with category for AI command center
       tags: c.tags.map(ct => ({
         name: ct.tag.name,
         category: ct.tag.category,

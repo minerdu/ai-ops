@@ -169,6 +169,7 @@
   border-radius: 4px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  border: 1px solid;
 }
 
 .tagLifecycle { background: #E6F7EF; color: #07C160; }
@@ -176,6 +177,185 @@
 .tagRisk { background: #FFF1F0; color: #FF4D4F; }
 .tagStatus { background: #F0F0F0; color: #666666; }
 .tagCustom { background: #F5E8FF; color: #7C3AED; }
+
+/* Member Header */
+.memberHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-bg-page);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+}
+
+.memberBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  border: 2px solid;
+  flex-shrink: 0;
+}
+
+.memberLevel {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.memberLabel {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.memberStats {
+  flex: 1;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.memberStatItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.memberStatValue {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.memberStatLabel {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+/* Basic Info Grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--space-2);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-sm);
+}
+
+.infoLabel {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.infoValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Preferences */
+.prefGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.prefItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  flex: 1;
+  min-width: 120px;
+}
+
+.prefIcon {
+  font-size: 18px;
+}
+
+.prefInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.prefLabel {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.prefValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.prefProjects {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.prefTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.prefTag {
+  padding: 2px 8px;
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.prefNotes {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.prefNotesLabel {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Tag Categories */
+.tagCategories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tagCategoryGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tagCategoryLabel {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-semibold);
+}
 
 /* CRM Records */
 .crmList {
@@ -186,8 +366,8 @@
 
 .crmItem {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
   padding: var(--space-3);
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -200,25 +380,34 @@
   background: var(--color-primary-bg);
 }
 
-.crmDate {
+.crmItemLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.crmProduct {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crmMeta {
   font-size: 10px;
   color: var(--color-text-tertiary);
 }
 
-.crmInfo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.crmProduct {
-  color: var(--color-text-primary);
-}
-
 .crmAmount {
   color: #FF4D4F;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+  margin-left: var(--space-2);
 }
 
 .emptyCrm {
