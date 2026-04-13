@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-export default function RadarChart({ scores, size = 72 }) {
+export default function RadarChart({ scores, size = 72, max = 10 }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function RadarChart({ scores, size = 72 }) {
     ctx.beginPath();
     for (let i = 0; i < numAxes; i++) {
       const angle = startAngle + i * angleStep;
-      const value = Math.min(values[i] / 5, 1);
+      const value = Math.max(0, Math.min(values[i] / max, 1));
       const x = centerX + maxRadius * value * Math.cos(angle);
       const y = centerY + maxRadius * value * Math.sin(angle);
       if (i === 0) ctx.moveTo(x, y);
@@ -77,7 +77,7 @@ export default function RadarChart({ scores, size = 72 }) {
     // Draw data points
     for (let i = 0; i < numAxes; i++) {
       const angle = startAngle + i * angleStep;
-      const value = Math.min(values[i] / 5, 1);
+      const value = Math.max(0, Math.min(values[i] / max, 1));
       const x = centerX + maxRadius * value * Math.cos(angle);
       const y = centerY + maxRadius * value * Math.sin(angle);
 

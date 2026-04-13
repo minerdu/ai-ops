@@ -17,13 +17,27 @@ export default function CustomerCard({ customer, style, selectable, selected, on
   const selectedCustomerId = useStore(s => s.selectedCustomerId);
   const isSelected = selectedCustomerId === customer.id;
 
-  const scores = {
-    '价值度': customer.valueScore,
-    '意向度': customer.intentScore,
-    '需求度': customer.demandScore,
-    '满意度': customer.satisfactionScore,
-    '关系度': customer.relationScore,
-  };
+  const uiScores = customer.uiScores || {};
+  let scores = {};
+  if (customer.isGroup) {
+    scores = {
+      '活跃度': uiScores.activityScore || 0,
+      '消费力': uiScores.spendingScore || 0,
+      '互动质量': uiScores.interactionScore || 0,
+      '品牌粘性': uiScores.loyaltyScore || 0,
+      '转介绍': uiScores.referralScore || 0,
+      '转化潜力': uiScores.conversionScore || 0,
+    };
+  } else {
+    scores = {
+      '客单价值': uiScores.valueScore || 0,
+      '跟进意向': uiScores.intentScore || 0,
+      '强烈需求': uiScores.demandScore || 0,
+      '满意度': uiScores.satisfactionScore || 0,
+      '客情关系': uiScores.relationScore || 0,
+      '忠诚度': uiScores.loyaltyScore || 0,
+    };
+  }
 
   const unreadCount = customer.unreadCount || 0;
 

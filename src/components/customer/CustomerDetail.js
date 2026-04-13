@@ -51,21 +51,48 @@ export default function CustomerDetail({ customerId, onClose }) {
     } catch (e) { crm = null; }
   }
 
-  const scores = [
-    { label: '价值', value: customer.valueScore || 0, color: '#FF4D4F' },
-    { label: '跟进', value: customer.intentScore || 0, color: '#1677FF' },
-    { label: '需求', value: customer.demandScore || 3.5, color: '#52C41A' },
-    { label: '满意', value: customer.satisfactionScore || 0, color: '#FF8C00' },
-    { label: '关系', value: customer.relationScore || 3.0, color: '#7C3AED' },
-  ];
+  // Conditionally generate scores arrays based on isGroup
+  const isGroup = customer.isGroup;
+  const uiScores = customer.uiScores || {};
+  
+  let scores = [];
+  let radarScores = {};
 
-  const radarScores = {
-    '价值': customer.valueScore || 0,
-    '意向': customer.intentScore || 0,
-    '需求': customer.demandScore || 3.5,
-    '满意': customer.satisfactionScore || 0,
-    '关系': customer.relationScore || 3.0,
-  };
+  if (isGroup) {
+    scores = [
+      { label: '活跃度', value: uiScores.activityScore || 0, color: '#1677FF' },
+      { label: '消费力', value: uiScores.spendingScore || 0, color: '#FF4D4F' },
+      { label: '互动质量', value: uiScores.interactionScore || 0, color: '#52C41A' },
+      { label: '品牌粘性', value: uiScores.loyaltyScore || 0, color: '#7C3AED' },
+      { label: '转介绍', value: uiScores.referralScore || 0, color: '#FA8C16' },
+      { label: '转化潜力', value: uiScores.conversionScore || 0, color: '#EB2F96' },
+    ];
+    radarScores = {
+      '活跃度': uiScores.activityScore || 0,
+      '消费力': uiScores.spendingScore || 0,
+      '互动质量': uiScores.interactionScore || 0,
+      '品牌粘性': uiScores.loyaltyScore || 0,
+      '转介绍': uiScores.referralScore || 0,
+      '转化潜力': uiScores.conversionScore || 0,
+    };
+  } else {
+    scores = [
+      { label: '客单价值', value: uiScores.valueScore || 0, color: '#FF4D4F' },
+      { label: '跟进意向', value: uiScores.intentScore || 0, color: '#1677FF' },
+      { label: '强烈需求', value: uiScores.demandScore || 0, color: '#52C41A' },
+      { label: '满意度', value: uiScores.satisfactionScore || 0, color: '#FF8C00' },
+      { label: '客情关系', value: uiScores.relationScore || 0, color: '#13C2C2' },
+      { label: '忠诚度', value: uiScores.loyaltyScore || 0, color: '#7C3AED' },
+    ];
+    radarScores = {
+      '客单价值': uiScores.valueScore || 0,
+      '跟进意向': uiScores.intentScore || 0,
+      '强烈需求': uiScores.demandScore || 0,
+      '满意度': uiScores.satisfactionScore || 0,
+      '客情关系': uiScores.relationScore || 0,
+      '忠诚度': uiScores.loyaltyScore || 0,
+    };
+  }
 
   const memberLevel = crm?.memberLevel || '未分级';
   const levelStyle = levelColors[memberLevel] || { bg: '#f5f5f5', text: '#999', border: '#d9d9d9' };
