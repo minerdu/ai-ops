@@ -664,6 +664,130 @@ export default function SettingsPage() {
             <YouzanConfigPanel />
           </div>
 
+        /* =================== AI 自主运营设置 =================== */
+        ) : viewState === 'autonomousOps' ? (
+          <div className={styles.content}>
+            <div className={styles.sectionCard}>
+              <div className={styles.sectionTitle}>🤖 AI 自主运营引擎</div>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '0 0 16px 0' }}>
+                基于客户旅程自动扫描全量客户，智能生成并执行运营任务，无需人工干预。
+              </p>
+              {/* 总开关 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'linear-gradient(135deg, #E6F7EF, #F0FFF4)', borderRadius: '12px', border: '1px solid #B7EB8F', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#07C160', boxShadow: '0 0 8px #07C160' }} />
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#07C160' }}>启用 AI 自主运营引擎</span>
+                </div>
+                <div style={{ width: '44px', height: '24px', borderRadius: '12px', background: '#07C160', position: 'relative', cursor: 'pointer' }}>
+                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'white', position: 'absolute', top: '2px', right: '2px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* 旅程阶段配置 */}
+            <div className={styles.sectionCard}>
+              <div className={styles.sectionTitle}>🗺️ 旅程阶段配置</div>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', margin: '0 0 12px 0' }}>
+                每个阶段可独立开关，配置执行时段和每日上限
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { icon: '🆕', label: '新客破冰', desc: '添加≤3天的新客户', time: '09:00-20:00', limit: 30 },
+                  { icon: '💬', label: '意向沟通', desc: '有互动且意向分≥3', time: '09:00-20:00', limit: 20 },
+                  { icon: '🎯', label: '客户转化', desc: '意向分≥4未下单', time: '10:00-18:00', limit: 15 },
+                  { icon: '🛒', label: '客户下单', desc: '有订单未到店', time: '09:00-20:00', limit: 20 },
+                  { icon: '💆', label: '到店消费', desc: '最近3天有到店', time: '14:00-20:00', limit: 15 },
+                  { icon: '❤️', label: '消费关怀', desc: '消费后3-7天', time: '10:00-18:00', limit: 20 },
+                  { icon: '🤝', label: '客户维系', desc: '活跃老客定期关怀', time: '10:00-20:00', limit: 15 },
+                  { icon: '📞', label: '跟进提醒', desc: '7-14天未互动', time: '10:00-18:00', limit: 20 },
+                  { icon: '🔔', label: '沉默激活', desc: '>14天未互动', time: '10:00-18:00', limit: 10 },
+                ].map((stage, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'var(--color-bg-page)', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '20px' }}>{stage.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600' }}>{stage.label}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>{stage.desc}</div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{stage.time}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>上限 {stage.limit}条/日</span>
+                    </div>
+                    <div style={{ width: '36px', height: '20px', borderRadius: '10px', background: '#07C160', position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'white', position: 'absolute', top: '2px', right: '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 审批规则 */}
+            <div className={styles.sectionCard}>
+              <div className={styles.sectionTitle}>🛡️ 审批规则</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ padding: '12px', background: 'var(--color-bg-page)', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>旅程任务审批</div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', padding: '6px 12px', background: '#E6F7EF', borderRadius: '8px', border: '2px solid #07C160', cursor: 'pointer' }}>
+                      <span style={{ color: '#07C160', fontWeight: '600' }}>●</span> 全自动（免审直通）
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', padding: '6px 12px', background: 'var(--color-bg-card)', borderRadius: '8px', border: '2px solid var(--color-border-light)', cursor: 'pointer', color: 'var(--color-text-tertiary)' }}>
+                      <span>○</span> 需人工确认
+                    </label>
+                  </div>
+                </div>
+                <div style={{ padding: '12px', background: 'var(--color-bg-page)', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>人工指令审批</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', minWidth: '80px' }}>财务关键词:</span>
+                      <div style={{ flex: 1, padding: '6px 10px', background: 'var(--color-bg-card)', borderRadius: '6px', fontSize: '12px', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border-light)' }}>
+                        优惠券, 折扣, 免费, 赠送, 返现, 佣金
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', minWidth: '80px' }}>金额阈值:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>¥</span>
+                        <div style={{ width: '60px', padding: '6px 10px', background: 'var(--color-bg-card)', borderRadius: '6px', fontSize: '13px', fontWeight: '600', border: '1px solid var(--color-border-light)', textAlign: 'center' }}>100</div>
+                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>以上需人工审批</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 执行统计 */}
+            <div className={styles.sectionCard}>
+              <div className={styles.sectionTitle}>📊 近 7 天执行统计</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                <div style={{ padding: '14px', background: 'linear-gradient(135deg, #E6F7EF, #D4EFDF)', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '22px', fontWeight: '700', color: '#07C160' }}>156</div>
+                  <div style={{ fontSize: '11px', color: '#52c41a' }}>总执行任务</div>
+                </div>
+                <div style={{ padding: '14px', background: 'linear-gradient(135deg, #E6F4FF, #D6E4FF)', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '22px', fontWeight: '700', color: '#1890ff' }}>98%</div>
+                  <div style={{ fontSize: '11px', color: '#597ef7' }}>成功率</div>
+                </div>
+                <div style={{ padding: '14px', background: 'linear-gradient(135deg, #FFF7E6, #FFE7BA)', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '22px', fontWeight: '700', color: '#FA8C16' }}>89</div>
+                  <div style={{ fontSize: '11px', color: '#d48806' }}>覆盖客户数</div>
+                </div>
+                <div style={{ padding: '14px', background: 'linear-gradient(135deg, #F9F0FF, #EFDBFF)', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '22px', fontWeight: '700', color: '#722ED1' }}>9</div>
+                  <div style={{ fontSize: '11px', color: '#9254de' }}>活跃旅程阶段</div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              style={{ width: '100%', padding: '14px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}
+              onClick={() => toast.success('设置已保存')}
+            >
+              💾 保存设置
+            </button>
+          </div>
+
         /* =================== 朋友圈智能体主菜单 =================== */
         ) : viewState === 'momentsAgent' ? (
           <div className={styles.content}>
@@ -1090,6 +1214,13 @@ export default function SettingsPage() {
               <div className={styles.itemLeft}>
                 <span className={styles.itemIcon}>🔗</span>
                 <span className={styles.itemName}>CRM 系统接入</span>
+              </div>
+              <span className={styles.itemArrow}>›</span>
+            </div>
+            <div className={styles.listItem} onClick={() => setViewState('autonomousOps')}>
+              <div className={styles.itemLeft}>
+                <span className={styles.itemIcon}>🤖</span>
+                <span className={styles.itemName}>AI 自主运营</span>
               </div>
               <span className={styles.itemArrow}>›</span>
             </div>

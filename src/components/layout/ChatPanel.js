@@ -218,12 +218,12 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
     toast.success('已转接人工，AI 已暂停回复');
   };
 
-  const [commandMode, setCommandMode] = useState('autonomous'); // 'autonomous' | 'command'
+  const [journeyExpanded, setJourneyExpanded] = useState(false);
   const [journeyStats, setJourneyStats] = useState(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   useEffect(() => {
-    if (!customerId && commandMode === 'autonomous') {
+    if (!customerId) {
       setIsLoadingStats(true);
       fetch('/api/tasks')
         .then(r => r.json())
@@ -233,7 +233,6 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
           today.setHours(0,0,0,0);
           const todayTasks = tasks.filter(t => new Date(t.scheduledAt || t.createdAt) >= today);
           const journeyTasks = tasks.filter(t => t.triggerSource === 'journey');
-          const manualTasks = tasks.filter(t => t.triggerSource === 'manual_command');
           
           const stages = [
             { key: 'new_ice', label: '新客破冰', icon: '🆕', count: 0 },
@@ -262,138 +261,117 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
           
           setJourneyStats({
             totalJourney: journeyTasks.length,
-            totalManual: manualTasks.length,
             todayCount: todayTasks.filter(t => t.triggerSource === 'journey').length,
             stages,
-            approvedRate: journeyTasks.length > 0 ? Math.round(journeyTasks.filter(t => t.approvalStatus === 'approved' || t.executeStatus === 'success').length / journeyTasks.length * 100) : 0,
             executedRate: journeyTasks.length > 0 ? Math.round(journeyTasks.filter(t => t.executeStatus === 'success').length / journeyTasks.length * 100) : 0,
           });
         })
         .catch(console.error)
         .finally(() => setIsLoadingStats(false));
     }
-  }, [customerId, commandMode]);
+  }, [customerId]);
 
   // ==========================================
-  // 运营指挥中心模式（未选择客户时）
+  // 运营指挥中心模式（未选择客户时）— 统一布局
   // ==========================================
   if (!customerId) {
     return (
       <div className={styles.chatPanel}>
-        {/* Dual Mode Tabs */}
-        <div style={{ display: 'flex', borderBottom: '2px solid var(--color-border-light)', background: 'var(--color-bg-card)' }}>
-          <button
-            onClick={() => setCommandMode('autonomous')}
-            style={{
-              flex: 1, padding: '14px 0', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
-              background: commandMode === 'autonomous' ? 'var(--color-bg-card)' : 'transparent',
-              color: commandMode === 'autonomous' ? '#07C160' : 'var(--color-text-tertiary)',
-              borderBottom: commandMode === 'autonomous' ? '3px solid #07C160' : '3px solid transparent',
-              transition: 'all 0.2s',
-            }}
-          >🤖 AI 自主运营</button>
-          <button
-            onClick={() => setCommandMode('command')}
-            style={{
-              flex: 1, padding: '14px 0', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
-              background: commandMode === 'command' ? 'var(--color-bg-card)' : 'transparent',
-              color: commandMode === 'command' ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-              borderBottom: commandMode === 'command' ? '3px solid var(--color-primary)' : '3px solid transparent',
-              transition: 'all 0.2s',
-            }}
-          >📋 运营指令</button>
+        {/* ===== TOP: Collapsible Journey Status Bar ===== */}
+        <div
+          onClick={() => setJourneyExpanded(!journeyExpanded)}
+          style={{
+            padding: '12px 16px',
+            background: 'linear-gradient(135deg, #E6F7EF, #F0FFF4)',
+            borderBottom: '1px solid #B7EB8F',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.2s',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#07C160', display: 'inline-block', boxShadow: '0 0 6px #07C160' }} />
+            <span style={{ fontSize: '13px', fontWeight: '600', color: '#07C160' }}>
+              AI 自主运营引擎运行中
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {journeyStats && (
+              <span style={{ fontSize: '12px', color: '#52c41a' }}>
+                今日 {journeyStats.todayCount} 条 · 总计 {journeyStats.totalJourney}
+              </span>
+            )}
+            <span style={{ fontSize: '16px', color: '#52c41a', transition: 'transform 0.3s', transform: journeyExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+          </div>
         </div>
 
-        {/* Autonomous Mode - Journey Dashboard */}
-        {commandMode === 'autonomous' && (
-          <div className={styles.messagesArea} style={{ padding: '20px' }}>
-            {isLoadingStats ? (
-              <div className={styles.emptyChat}><p>加载中...</p></div>
-            ) : journeyStats ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* Summary Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #E6F7EF, #D4EFDF)', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#07C160' }}>{journeyStats.totalJourney}</div>
-                    <div style={{ fontSize: '11px', color: '#52c41a', marginTop: '4px' }}>旅程任务总计</div>
-                  </div>
-                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #E6F4FF, #D6E4FF)', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#1890ff' }}>{journeyStats.todayCount}</div>
-                    <div style={{ fontSize: '11px', color: '#597ef7', marginTop: '4px' }}>今日自动任务</div>
-                  </div>
-                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #FFF7E6, #FFE7BA)', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#FA8C16' }}>{journeyStats.executedRate}%</div>
-                    <div style={{ fontSize: '11px', color: '#d48806', marginTop: '4px' }}>执行完成率</div>
-                  </div>
-                </div>
-
-                {/* Journey Pipeline */}
-                <div style={{ background: 'var(--color-bg-card)', borderRadius: '12px', padding: '16px', border: '1px solid var(--color-border-light)' }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px 0', color: 'var(--color-text-primary)' }}>🗺️ 客户旅程运营管道</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {journeyStats.stages.map((stage, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'var(--color-bg-page)', borderRadius: '8px' }}>
-                        <span style={{ fontSize: '18px' }}>{stage.icon}</span>
-                        <span style={{ fontSize: '13px', flex: 1, fontWeight: '500' }}>{stage.label}</span>
-                        <span style={{ fontSize: '14px', fontWeight: '700', color: stage.count > 0 ? '#07C160' : 'var(--color-text-tertiary)' }}>{stage.count}</span>
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>条</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div style={{ padding: '14px', background: 'linear-gradient(135deg, #E6F7EF, #F0FFF4)', borderRadius: '12px', border: '1px solid #B7EB8F', textAlign: 'center' }}>
-                  <span style={{ fontSize: '13px', color: '#07C160', fontWeight: '600' }}>
-                    🟢 AI 自主运营引擎运行中 · 每日自动扫描全量客户 · 全旅程免审直通
-                  </span>
-                </div>
+        {/* Expanded Journey Details */}
+        {journeyExpanded && journeyStats && (
+          <div style={{ padding: '12px 16px', background: 'var(--color-bg-section)', borderBottom: '1px solid var(--color-border-light)', flexShrink: 0 }}>
+            {/* Mini Stats Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ padding: '10px', background: 'linear-gradient(135deg, #E6F7EF, #D4EFDF)', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#07C160' }}>{journeyStats.totalJourney}</div>
+                <div style={{ fontSize: '10px', color: '#52c41a' }}>旅程任务</div>
               </div>
-            ) : (
-              <div className={styles.emptyChat}>
-                <div className={styles.emptyChatIcon}>🤖</div>
-                <h3 className={styles.emptyChatTitle}>AI 自主运营引擎</h3>
-                <p className={styles.emptyChatDesc}>基于客户旅程自动执行运营任务，无需人工干预</p>
+              <div style={{ padding: '10px', background: 'linear-gradient(135deg, #E6F4FF, #D6E4FF)', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#1890ff' }}>{journeyStats.todayCount}</div>
+                <div style={{ fontSize: '10px', color: '#597ef7' }}>今日执行</div>
               </div>
-            )}
+              <div style={{ padding: '10px', background: 'linear-gradient(135deg, #FFF7E6, #FFE7BA)', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#FA8C16' }}>{journeyStats.executedRate}%</div>
+                <div style={{ fontSize: '10px', color: '#d48806' }}>完成率</div>
+              </div>
+            </div>
+            {/* Journey Stages - Horizontal Scroll */}
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+              {journeyStats.stages.map((stage, i) => (
+                <div key={i} style={{
+                  minWidth: '72px', padding: '8px 6px', background: 'var(--color-bg-card)',
+                  borderRadius: '10px', textAlign: 'center', border: '1px solid var(--color-border-light)',
+                  flexShrink: 0,
+                }}>
+                  <div style={{ fontSize: '18px' }}>{stage.icon}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginTop: '2px', whiteSpace: 'nowrap' }}>{stage.label}</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: stage.count > 0 ? '#07C160' : 'var(--color-text-tertiary)', marginTop: '2px' }}>{stage.count}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Manual Command Mode */}
-        {commandMode === 'command' && (
-          <div className={styles.messagesArea}>
-            {commandMessages.length === 0 ? (
-              <div className={styles.emptyChat}>
-                <div className={styles.emptyChatIcon}>📋</div>
-                <h3 className={styles.emptyChatTitle}>运营指令中心</h3>
-                <p className={styles.emptyChatDesc}>用自然语言下达非日常运营指令（促销、优惠券、指定活动等）</p>
-                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
-                  {[
-                    '🎁 对高意向客户发送200元体验优惠券',
-                    '📣 五一活动通知全部VIP客户',
-                    '💎 给V6客户发送年度专属礼遇',
-                    '🔄 为沉默客户做3次破冰SOP',
-                  ].map((hint, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { setInputValue(hint.substring(2).trim()); }}
-                      style={{
-                        padding: '10px 14px',
-                        background: 'var(--color-bg-card)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        color: 'var(--color-text-secondary)',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.color = 'var(--color-primary)'; }}
-                      onMouseLeave={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.color = 'var(--color-text-secondary)'; }}
-                    >{hint}</button>
-                  ))}
-                </div>
+        {/* ===== MIDDLE: Command Messages Area ===== */}
+        <div className={styles.messagesArea}>
+          {commandMessages.length === 0 ? (
+            <div className={styles.emptyChat}>
+              <div className={styles.emptyChatIcon}>📋</div>
+              <h3 className={styles.emptyChatTitle}>运营指挥中心</h3>
+              <p className={styles.emptyChatDesc}>用自然语言下达运营指令，AI 将自动解析并执行</p>
+              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
+                {[
+                  '🎁 对高意向客户发送200元体验优惠券',
+                  '📣 五一活动通知全部VIP客户',
+                  '💎 给V6客户发送年度专属礼遇',
+                  '🔄 为沉默客户做3次破冰SOP',
+                ].map((hint, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setInputValue(hint.substring(2).trim()); }}
+                    style={{
+                      padding: '10px 14px', background: 'var(--color-bg-card)',
+                      border: '1px solid var(--color-border)', borderRadius: '10px',
+                      fontSize: '13px', color: 'var(--color-text-secondary)',
+                      cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.color = 'var(--color-primary)'; }}
+                    onMouseLeave={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.color = 'var(--color-text-secondary)'; }}
+                  >{hint}</button>
+                ))}
               </div>
+            </div>
           ) : (
             <div className={styles.messagesList}>
               {commandMessages.map((msg) => (
@@ -419,36 +397,14 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                         {msg.data.execution?.targetNames?.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                             {msg.data.execution.targetNames.map((name, i) => (
-                              <span key={i} style={{
-                                padding: '2px 8px',
-                                background: '#E6F7EF',
-                                color: '#07C160',
-                                borderRadius: '10px',
-                                fontSize: '11px',
-                                fontWeight: '500',
-                              }}>{name}</span>
+                              <span key={i} style={{ padding: '2px 8px', background: '#E6F7EF', color: '#07C160', borderRadius: '10px', fontSize: '11px', fontWeight: '500' }}>{name}</span>
                             ))}
                           </div>
                         )}
-                        <div style={{
-                          padding: '10px',
-                          background: 'var(--color-bg-page)',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          color: 'var(--color-text-secondary)',
-                          lineHeight: '1.5',
-                          borderLeft: '3px solid var(--color-primary)',
-                        }}>
+                        <div style={{ padding: '10px', background: 'var(--color-bg-page)', borderRadius: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '1.5', borderLeft: '3px solid var(--color-primary)' }}>
                           📨 发送内容：{msg.data.plan?.actionContent}
                         </div>
-                        <div style={{
-                          padding: '8px 12px',
-                          background: msg.data.plan?.needApproval ? '#FFF7E6' : '#E6F7EF',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: msg.data.plan?.needApproval ? '#FA8C16' : '#07C160',
-                        }}>
+                        <div style={{ padding: '8px 12px', background: msg.data.plan?.needApproval ? '#FFF7E6' : '#E6F7EF', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: msg.data.plan?.needApproval ? '#FA8C16' : '#07C160' }}>
                           {msg.data.plan?.needApproval
                             ? `⚠️ 涉及财务，已提交审批中心等待确认 (${msg.data.execution?.tasksCreated} 条)`
                             : `✅ 已自动排期执行 ${msg.data.execution?.tasksCreated} 条任务`}
@@ -497,9 +453,8 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
             </div>
           )}
         </div>
-        )}
-        {/* Command Input - only show in command mode */}
-        {commandMode === 'command' && (
+
+        {/* ===== BOTTOM: Command Input (always visible) ===== */}
         <div className={styles.inputAreaWrapper}>
           <div className={styles.inputArea}>
             <div className={styles.inputWrapper}>
@@ -525,7 +480,6 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
             </div>
           </div>
         </div>
-        )}
       </div>
     );
   }
