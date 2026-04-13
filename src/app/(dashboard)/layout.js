@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }) {
     return allMessages[selectedCustomerId] || [];
   }, [selectedCustomerId, allMessages]);
 
-  const pendingTaskCount = 2; // from mock
+  const pendingTaskCount = 0; // removed badge per request
 
   // Calculate unread dynamic badges based on assignment
   const unreadMain = (customers || []).reduce((acc, c) => acc + (c.unreadCount || 0), 0);
@@ -77,8 +77,9 @@ export default function DashboardLayout({ children }) {
             className={`${styles.accountBadge} ${activeWorkspace === 'sub_1' ? styles.accountActive : ''}`} 
             title="AI顾问-门店1"
             onClick={() => { setActiveWorkspace('sub_1'); setActiveMainPanel('leads'); }}
+            style={{ background: '#722ED1' }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=A" alt="W1" />
+            <span className={styles.mainAccountIcon} style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>门店1</span>
             <div className={`${styles.accountStatus} ${styles.statusOnline}`} />
             {unreadSub1 > 0 && <span className={styles.accountUnread}>{unreadSub1}</span>}
           </div>
@@ -86,8 +87,9 @@ export default function DashboardLayout({ children }) {
             className={`${styles.accountBadge} ${activeWorkspace === 'sub_2' ? styles.accountActive : ''}`} 
             title="AI顾问-门店2"
             onClick={() => { setActiveWorkspace('sub_2'); setActiveMainPanel('leads'); }}
+            style={{ background: '#FA8C16' }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=B" alt="W2" />
+            <span className={styles.mainAccountIcon} style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>门店2</span>
             <div className={`${styles.accountStatus} ${styles.statusOnline}`} />
             {unreadSub2 > 0 && <span className={styles.accountUnread}>{unreadSub2}</span>}
           </div>
@@ -95,8 +97,9 @@ export default function DashboardLayout({ children }) {
             className={`${styles.accountBadge} ${activeWorkspace === 'sub_3' ? styles.accountActive : ''}`} 
             title="AI顾问-门店3"
             onClick={() => { setActiveWorkspace('sub_3'); setActiveMainPanel('leads'); }}
+            style={{ background: '#13C2C2' }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=C" alt="W3" />
+            <span className={styles.mainAccountIcon} style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>门店3</span>
             <div className={`${styles.accountStatus} ${styles.statusOnline}`} />
             {unreadSub3 > 0 && <span className={styles.accountUnread}>{unreadSub3}</span>}
           </div>

@@ -1,8 +1,9 @@
 /**
- * AI 自动审核引擎
+ * AI 自动审核引擎 v2
  * 
- * 低风险任务 AI 自动审批通过，高风险任务自动路由人工审批。
- * 所有审核操作记录到 AuditLog 表。
+ * 双模式审核：
+ * - journey（旅程自动）→ 一律自动通过
+ * - manual_command（人工指令）→ 检查财务关键词/金额 → 决定通过或人工审批
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -10,28 +11,17 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // --------------------------------------------------------
-// 自动通过规则
+// 审核规则
 // --------------------------------------------------------
 
-const AUTO_APPROVE_RULES = {
-  // 单次批量任务覆盖人数 ≤ 此值则可自动通过
-  maxCustomerCount: 10,
+const FINANCIAL_KEYWORDS = [
+  '退款', '退钱', '退费', '赔偿', '报价',
+  '优惠券', '折扣', '免费', '赠送', '返现', '佣金',
+  '元券', '代金券', '现金券',
+];
 
-  // 涉及以下任务类型必须人工审批
-  requireManualTypes: ['send_coupon', 'send_refund', 'price_change'],
-
-  // 消息内容过长需人工审查
-  maxContentLength: 200,
-
-  // 财务/敏感关键词 → 强制人工
-  financialKeywords: [
-    '退款', '退钱', '退费', '赔偿', '投诉', '报价', '打折',
-    '优惠券', '折扣', '免费', '赠送', '返现', '佣金',
-  ],
-
-  // 触发来源白名单：仅这些来源可被 AI 自动审核
-  autoReviewableSources: ['ai', 'sop', 'ai-sop'],
-};
+// 金额正则：匹配 "100元"、"¥200"、"200块" 等
+const AMOUNT_REGEX = /(?:¥|￥)?(\d+(?:\.\d+)?)\s*(?:元|块|¥)/g;
 
 /**
  * 加载动态安全规则（从数据库 SafetyRule 表）
@@ -44,86 +34,73 @@ async function loadDynamicRules() {
     return {
       stopKeywords: rules.filter(r => r.ruleType === 'stop_keyword').map(r => r.value),
       financialKeywords: rules.filter(r => r.ruleType === 'financial_keyword').map(r => r.value),
-      journeyBlocks: rules.filter(r => r.ruleType === 'journey_block').map(r => r.value),
-      dailyLimit: rules.find(r => r.ruleType === 'daily_limit')?.value || '100',
+      dailyLimit: rules.find(r => r.ruleType === 'daily_limit')?.value || '500',
     };
   } catch (e) {
-    console.warn('[AutoReview] Failed to load dynamic rules, using defaults:', e.message);
-    return { stopKeywords: [], financialKeywords: [], journeyBlocks: [], dailyLimit: '100' };
+    console.warn('[AutoReview] Failed to load dynamic rules:', e.message);
+    return { stopKeywords: [], financialKeywords: [], dailyLimit: '500' };
   }
 }
 
 /**
- * 审核一个 Task，决定自动通过还是路由人工
+ * 检查内容中是否包含超过 100 元的金额
+ */
+function containsHighAmount(content) {
+  if (!content) return false;
+  const matches = [...content.matchAll(AMOUNT_REGEX)];
+  return matches.some(m => parseFloat(m[1]) > 100);
+}
+
+/**
+ * 审核一个 Task
  * 
- * @param {object} task - 带 customer 关联的 Task 对象
- * @param {object} options - 额外选项
- * @param {number} options.batchSize - 本批次涵盖的客户总数
+ * @param {object} task
  * @returns {Promise<{approved: boolean, reason: string}>}
  */
-export async function reviewTask(task, options = {}) {
+export async function reviewTask(task) {
+  // ============================================================
+  // 规则 1：旅程自动任务 → 一律自动通过
+  // ============================================================
+  if (task.triggerSource === 'journey' || task.triggerSource === 'ai-sop') {
+    return {
+      approved: true,
+      reason: 'AI自动审核通过：客户旅程自动运营任务，免审直通',
+    };
+  }
+
+  // ============================================================
+  // 规则 2：手动指令 / SOP → 检查财务风险
+  // ============================================================
   const reasons = [];
-  const batchSize = options.batchSize || 1;
 
-  // 1. 检查触发来源
-  if (!AUTO_APPROVE_RULES.autoReviewableSources.includes(task.triggerSource)) {
-    reasons.push(`触发来源 "${task.triggerSource}" 不在自动审核白名单`);
-  }
-
-  // 2. 检查批量大小
-  if (batchSize > AUTO_APPROVE_RULES.maxCustomerCount) {
-    reasons.push(`批量任务覆盖 ${batchSize} 人，超过自动通过阈值 (${AUTO_APPROVE_RULES.maxCustomerCount}人)`);
-  }
-
-  // 3. 检查任务类型
-  if (AUTO_APPROVE_RULES.requireManualTypes.includes(task.taskType)) {
-    reasons.push(`任务类型 "${task.taskType}" 需人工审批`);
-  }
-
-  // 4. 检查内容长度
-  if (task.content && task.content.length > AUTO_APPROVE_RULES.maxContentLength) {
-    reasons.push(`消息内容过长 (${task.content.length}字)，建议人工审查`);
-  }
-
-  // 5. 检查财务敏感词（静态 + 动态）
+  // 2a. 检查财务敏感词（静态 + 动态）
   const dynamicRules = await loadDynamicRules();
-  const allFinancialKeywords = [
-    ...AUTO_APPROVE_RULES.financialKeywords,
-    ...dynamicRules.financialKeywords,
-  ];
+  const allFinancialKeywords = [...FINANCIAL_KEYWORDS, ...dynamicRules.financialKeywords];
   const foundKeywords = allFinancialKeywords.filter(kw => task.content?.includes(kw));
   if (foundKeywords.length > 0) {
     reasons.push(`包含财务敏感词: [${foundKeywords.join('、')}]`);
   }
 
-  // 6. 检查休止关键字
+  // 2b. 检查金额 >100
+  if (containsHighAmount(task.content)) {
+    reasons.push('内容包含超过100元的金额');
+  }
+
+  // 2c. 检查休止关键字
   const foundStopwords = dynamicRules.stopKeywords.filter(kw => task.content?.includes(kw));
   if (foundStopwords.length > 0) {
     reasons.push(`包含休止关键字: [${foundStopwords.join('、')}]`);
   }
 
-  // 7. 检查每日发送量限制
-  const dailyLimit = parseInt(dynamicRules.dailyLimit, 10);
-  try {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayCount = await prisma.task.count({
-      where: {
-        executeStatus: { in: ['scheduled', 'success'] },
-        createdAt: { gte: todayStart },
-      },
-    });
-    if (todayCount + batchSize > dailyLimit) {
-      reasons.push(`今日已排期/已执行 ${todayCount} 条，加上本次 ${batchSize} 条将超出每日上限 ${dailyLimit}`);
-    }
-  } catch (e) {
-    // 查询失败不阻塞
+  // 2d. 检查任务类型
+  if (['send_coupon', 'send_refund', 'price_change'].includes(task.taskType)) {
+    reasons.push(`任务类型 "${task.taskType}" 涉及财务操作`);
   }
 
   const approved = reasons.length === 0;
   const reviewNotes = approved
-    ? 'AI自动审核通过：低风险任务，符合所有自动通过条件'
-    : `AI自动审核拦截：${reasons.join('；')}`;
+    ? 'AI自动审核通过：运营指令任务，未检测到财务风险'
+    : `AI自动审核拦截 → 需人工审批：${reasons.join('；')}`;
 
   // 记录审计日志
   try {
@@ -135,7 +112,6 @@ export async function reviewTask(task, options = {}) {
         operator: 'ai',
         reason: reviewNotes,
         metadata: JSON.stringify({
-          batchSize,
           taskType: task.taskType,
           triggerSource: task.triggerSource,
           contentLength: task.content?.length || 0,
@@ -151,12 +127,8 @@ export async function reviewTask(task, options = {}) {
 
 /**
  * 对 Task 执行审核并自动更新其状态
- * 
- * @param {string} taskId - Task ID
- * @param {object} options - { batchSize }
- * @returns {Promise<{approved: boolean, reason: string}>}
  */
-export async function reviewAndUpdateTask(taskId, options = {}) {
+export async function reviewAndUpdateTask(taskId) {
   const task = await prisma.task.findUnique({
     where: { id: taskId },
     include: { customer: true },
@@ -166,9 +138,8 @@ export async function reviewAndUpdateTask(taskId, options = {}) {
     throw new Error(`Task not found: ${taskId}`);
   }
 
-  const result = await reviewTask(task, options);
+  const result = await reviewTask(task);
 
-  // 更新 Task 状态
   await prisma.task.update({
     where: { id: taskId },
     data: {
@@ -176,22 +147,18 @@ export async function reviewAndUpdateTask(taskId, options = {}) {
       executeStatus: result.approved ? 'scheduled' : 'draft',
       reviewedBy: 'ai',
       reviewNotes: result.reason,
-      // 自动通过的任务，排期到 5 分钟后执行
-      scheduledAt: result.approved ? new Date(Date.now() + 5 * 60 * 1000) : null,
+      scheduledAt: result.approved
+        ? (task.scheduledAt || new Date(Date.now() + 5 * 60 * 1000))
+        : task.scheduledAt,
     },
   });
 
-  console.log(`[AutoReview] Task ${taskId}: ${result.approved ? '✅ AUTO-APPROVED' : '⏸️ PENDING MANUAL REVIEW'}`);
-  console.log(`[AutoReview] Reason: ${result.reason}`);
-
+  console.log(`[AutoReview] Task ${taskId}: ${result.approved ? '✅ AUTO-APPROVED' : '⏸️ PENDING MANUAL'}`);
   return result;
 }
 
 /**
  * 批量审核多个 Task
- * 
- * @param {string[]} taskIds - Task ID 列表
- * @returns {Promise<{approved: string[], pending: string[], results: object[]}>}
  */
 export async function batchReview(taskIds) {
   const approved = [];
@@ -199,7 +166,7 @@ export async function batchReview(taskIds) {
   const results = [];
 
   for (const taskId of taskIds) {
-    const result = await reviewAndUpdateTask(taskId, { batchSize: taskIds.length });
+    const result = await reviewAndUpdateTask(taskId);
     if (result.approved) {
       approved.push(taskId);
     } else {
@@ -208,14 +175,8 @@ export async function batchReview(taskIds) {
     results.push({ taskId, ...result });
   }
 
-  console.log(`[AutoReview] Batch review: ${approved.length} approved, ${pending.length} pending manual`);
-
+  console.log(`[AutoReview] Batch: ${approved.length} approved, ${pending.length} pending`);
   return { approved, pending, results };
 }
 
-export default {
-  reviewTask,
-  reviewAndUpdateTask,
-  batchReview,
-  AUTO_APPROVE_RULES,
-};
+export default { reviewTask, reviewAndUpdateTask, batchReview };

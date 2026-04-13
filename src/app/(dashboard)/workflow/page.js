@@ -91,12 +91,17 @@ export default function WorkflowPage() {
     }).map(t => ({
       id: t.id,
       time: new Date(t.scheduledAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-      icon: t.taskType === 'image' ? '🖼️' : t.taskType === 'video' ? '🎬' : '📝',
+      icon: t.triggerSource === 'journey' ? '🤖' : t.triggerSource === 'manual_command' ? '📋' : t.taskType === 'image' ? '🖼️' : '📝',
       target: t.customerName || '未知用户',
       description: t.title,
       status: t.approvalStatus,
       executeStatus: t.executeStatus,
-      color: t.approvalStatus === 'pending' ? '#fffbe6' : t.executeStatus === 'success' ? '#f6ffed' : '#e6f7ff',
+      triggerSource: t.triggerSource,
+      color: t.triggerSource === 'journey' 
+        ? '#f0fff4' 
+        : t.triggerSource === 'manual_command' 
+          ? (t.approvalStatus === 'pending' ? '#fffbe6' : '#e6f4ff')
+          : '#f5f5f5',
     })).sort((a, b) => a.time.localeCompare(b.time));
   }, [tasks, selectedDate]);
 

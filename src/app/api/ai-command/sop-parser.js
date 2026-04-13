@@ -41,9 +41,9 @@ export async function parseSopScheduleToTasks(sopSchedule, targetCustomers, meta
           title: step.title || `${meta.intent || 'SOP任务'} - 第${i + 1}步`,
           taskType: step.action?.type || 'text',
           content: step.content || step.action?.content || '',
-          triggerSource: 'ai-sop',
-          triggerReason: `AI SOP 编排: "${(meta.command || '').substring(0, 80)}" → 第${i + 1}/${steps.length}步`,
-          approvalStatus: meta.needApproval ? 'pending' : 'pending', // 先设为 pending，由 auto-review 决定
+          triggerSource: 'manual_command',
+          triggerReason: `📋 人工 SOP 编排: "${(meta.command || '').substring(0, 80)}" → 第${i + 1}/${steps.length}步`,
+          approvalStatus: 'pending',
           executeStatus: 'draft',
           scheduledAt,
         },

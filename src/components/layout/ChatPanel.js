@@ -22,6 +22,24 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
   const messagesEndRef = useRef(null);
   const prevCustomerIdRef = useRef(customerId);
   const toast = useToast();
+  
+  const customer = useStore(s => s.customers.find(c => c.id === customerId));
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
+  const [isAllLoaded, setIsAllLoaded] = useState(false);
+
+  const handleLoadFullHistory = async () => {
+    setIsLoadingAll(true);
+    try {
+      const res = await fetch(`/api/messages?customerId=${customerId}&all=true`);
+      const data = await res.json();
+      setMessages(data);
+      setIsAllLoaded(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingAll(false);
+    }
+  };
 
   useEffect(() => {
     if (prevCustomerIdRef.current !== customerId) {
@@ -200,45 +218,182 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
     toast.success('已转接人工，AI 已暂停回复');
   };
 
+  const [commandMode, setCommandMode] = useState('autonomous'); // 'autonomous' | 'command'
+  const [journeyStats, setJourneyStats] = useState(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+  useEffect(() => {
+    if (!customerId && commandMode === 'autonomous') {
+      setIsLoadingStats(true);
+      fetch('/api/tasks')
+        .then(r => r.json())
+        .then(data => {
+          const tasks = Array.isArray(data) ? data : [];
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const todayTasks = tasks.filter(t => new Date(t.scheduledAt || t.createdAt) >= today);
+          const journeyTasks = tasks.filter(t => t.triggerSource === 'journey');
+          const manualTasks = tasks.filter(t => t.triggerSource === 'manual_command');
+          
+          const stages = [
+            { key: 'new_ice', label: '新客破冰', icon: '🆕', count: 0 },
+            { key: 'intent_chat', label: '意向沟通', icon: '💬', count: 0 },
+            { key: 'convert', label: '客户转化', icon: '🎯', count: 0 },
+            { key: 'order', label: '客户下单', icon: '🛒', count: 0 },
+            { key: 'visit', label: '到店消费', icon: '💆', count: 0 },
+            { key: 'aftercare', label: '消费关怀', icon: '❤️', count: 0 },
+            { key: 'maintain', label: '客户维系', icon: '🤝', count: 0 },
+            { key: 'followup', label: '跟进提醒', icon: '📞', count: 0 },
+            { key: 'reactivate', label: '沉默激活', icon: '🔔', count: 0 },
+          ];
+          journeyTasks.forEach(t => {
+            const reason = t.triggerReason || '';
+            if (reason.includes('新客破冰')) stages[0].count++;
+            else if (reason.includes('意向沟通')) stages[1].count++;
+            else if (reason.includes('转化')) stages[2].count++;
+            else if (reason.includes('下单')) stages[3].count++;
+            else if (reason.includes('到店')) stages[4].count++;
+            else if (reason.includes('关怀')) stages[5].count++;
+            else if (reason.includes('维系')) stages[6].count++;
+            else if (reason.includes('跟进')) stages[7].count++;
+            else if (reason.includes('激活') || reason.includes('沉默')) stages[8].count++;
+            else stages[6].count++;
+          });
+          
+          setJourneyStats({
+            totalJourney: journeyTasks.length,
+            totalManual: manualTasks.length,
+            todayCount: todayTasks.filter(t => t.triggerSource === 'journey').length,
+            stages,
+            approvedRate: journeyTasks.length > 0 ? Math.round(journeyTasks.filter(t => t.approvalStatus === 'approved' || t.executeStatus === 'success').length / journeyTasks.length * 100) : 0,
+            executedRate: journeyTasks.length > 0 ? Math.round(journeyTasks.filter(t => t.executeStatus === 'success').length / journeyTasks.length * 100) : 0,
+          });
+        })
+        .catch(console.error)
+        .finally(() => setIsLoadingStats(false));
+    }
+  }, [customerId, commandMode]);
+
   // ==========================================
   // 运营指挥中心模式（未选择客户时）
   // ==========================================
   if (!customerId) {
     return (
       <div className={styles.chatPanel}>
-        <div className={styles.messagesArea}>
-          {commandMessages.length === 0 ? (
-            <div className={styles.emptyChat}>
-              <div className={styles.emptyChatIcon}>🎯</div>
-              <h3 className={styles.emptyChatTitle}>运营指挥中心</h3>
-              <p className={styles.emptyChatDesc}>用自然语言下达运营指令，AI 将自动解析并执行</p>
-              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
-                {[
-                  '🎁 对高意向客户发送体验优惠券',
-                  '🔔 激活所有沉默客户',
-                  '💎 给VIP客户发送专属福利通知',
-                  '📣 向未消费客户推荐新人套餐',
-                ].map((hint, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setInputValue(hint.substring(2).trim()); }}
-                    style={{
-                      padding: '10px 14px',
-                      background: 'var(--color-bg-card)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '10px',
-                      fontSize: '13px',
-                      color: 'var(--color-text-secondary)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.color = 'var(--color-primary)'; }}
-                    onMouseLeave={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.color = 'var(--color-text-secondary)'; }}
-                  >{hint}</button>
-                ))}
+        {/* Dual Mode Tabs */}
+        <div style={{ display: 'flex', borderBottom: '2px solid var(--color-border-light)', background: 'var(--color-bg-card)' }}>
+          <button
+            onClick={() => setCommandMode('autonomous')}
+            style={{
+              flex: 1, padding: '14px 0', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+              background: commandMode === 'autonomous' ? 'var(--color-bg-card)' : 'transparent',
+              color: commandMode === 'autonomous' ? '#07C160' : 'var(--color-text-tertiary)',
+              borderBottom: commandMode === 'autonomous' ? '3px solid #07C160' : '3px solid transparent',
+              transition: 'all 0.2s',
+            }}
+          >🤖 AI 自主运营</button>
+          <button
+            onClick={() => setCommandMode('command')}
+            style={{
+              flex: 1, padding: '14px 0', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+              background: commandMode === 'command' ? 'var(--color-bg-card)' : 'transparent',
+              color: commandMode === 'command' ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+              borderBottom: commandMode === 'command' ? '3px solid var(--color-primary)' : '3px solid transparent',
+              transition: 'all 0.2s',
+            }}
+          >📋 运营指令</button>
+        </div>
+
+        {/* Autonomous Mode - Journey Dashboard */}
+        {commandMode === 'autonomous' && (
+          <div className={styles.messagesArea} style={{ padding: '20px' }}>
+            {isLoadingStats ? (
+              <div className={styles.emptyChat}><p>加载中...</p></div>
+            ) : journeyStats ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Summary Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #E6F7EF, #D4EFDF)', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#07C160' }}>{journeyStats.totalJourney}</div>
+                    <div style={{ fontSize: '11px', color: '#52c41a', marginTop: '4px' }}>旅程任务总计</div>
+                  </div>
+                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #E6F4FF, #D6E4FF)', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#1890ff' }}>{journeyStats.todayCount}</div>
+                    <div style={{ fontSize: '11px', color: '#597ef7', marginTop: '4px' }}>今日自动任务</div>
+                  </div>
+                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #FFF7E6, #FFE7BA)', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#FA8C16' }}>{journeyStats.executedRate}%</div>
+                    <div style={{ fontSize: '11px', color: '#d48806', marginTop: '4px' }}>执行完成率</div>
+                  </div>
+                </div>
+
+                {/* Journey Pipeline */}
+                <div style={{ background: 'var(--color-bg-card)', borderRadius: '12px', padding: '16px', border: '1px solid var(--color-border-light)' }}>
+                  <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px 0', color: 'var(--color-text-primary)' }}>🗺️ 客户旅程运营管道</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {journeyStats.stages.map((stage, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'var(--color-bg-page)', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '18px' }}>{stage.icon}</span>
+                        <span style={{ fontSize: '13px', flex: 1, fontWeight: '500' }}>{stage.label}</span>
+                        <span style={{ fontSize: '14px', fontWeight: '700', color: stage.count > 0 ? '#07C160' : 'var(--color-text-tertiary)' }}>{stage.count}</span>
+                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>条</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div style={{ padding: '14px', background: 'linear-gradient(135deg, #E6F7EF, #F0FFF4)', borderRadius: '12px', border: '1px solid #B7EB8F', textAlign: 'center' }}>
+                  <span style={{ fontSize: '13px', color: '#07C160', fontWeight: '600' }}>
+                    🟢 AI 自主运营引擎运行中 · 每日自动扫描全量客户 · 全旅程免审直通
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className={styles.emptyChat}>
+                <div className={styles.emptyChatIcon}>🤖</div>
+                <h3 className={styles.emptyChatTitle}>AI 自主运营引擎</h3>
+                <p className={styles.emptyChatDesc}>基于客户旅程自动执行运营任务，无需人工干预</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Manual Command Mode */}
+        {commandMode === 'command' && (
+          <div className={styles.messagesArea}>
+            {commandMessages.length === 0 ? (
+              <div className={styles.emptyChat}>
+                <div className={styles.emptyChatIcon}>📋</div>
+                <h3 className={styles.emptyChatTitle}>运营指令中心</h3>
+                <p className={styles.emptyChatDesc}>用自然语言下达非日常运营指令（促销、优惠券、指定活动等）</p>
+                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
+                  {[
+                    '🎁 对高意向客户发送200元体验优惠券',
+                    '📣 五一活动通知全部VIP客户',
+                    '💎 给V6客户发送年度专属礼遇',
+                    '🔄 为沉默客户做3次破冰SOP',
+                  ].map((hint, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setInputValue(hint.substring(2).trim()); }}
+                      style={{
+                        padding: '10px 14px',
+                        background: 'var(--color-bg-card)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        color: 'var(--color-text-secondary)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.color = 'var(--color-primary)'; }}
+                      onMouseLeave={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.color = 'var(--color-text-secondary)'; }}
+                    >{hint}</button>
+                  ))}
+                </div>
+              </div>
           ) : (
             <div className={styles.messagesList}>
               {commandMessages.map((msg) => (
@@ -342,7 +497,9 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
             </div>
           )}
         </div>
-        {/* Command Input */}
+        )}
+        {/* Command Input - only show in command mode */}
+        {commandMode === 'command' && (
         <div className={styles.inputAreaWrapper}>
           <div className={styles.inputArea}>
             <div className={styles.inputWrapper}>
@@ -368,6 +525,7 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
             </div>
           </div>
         </div>
+        )}
       </div>
     );
   }
@@ -391,6 +549,17 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
           </div>
         ) : (
           <div className={styles.messagesList}>
+            {!isAllLoaded && messages.length >= 40 && (
+              <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                <button 
+                  onClick={handleLoadFullHistory}
+                  disabled={isLoadingAll}
+                  style={{ padding: '6px 16px', fontSize: '12px', background: '#e6f7ff', color: '#1890ff', border: '1px solid #91d5ff', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  {isLoadingAll ? '加载中...' : '↑ 点击查看完整沟通记录'}
+                </button>
+              </div>
+            )}
             {messages.map((msg, index) => (
               <div
                 key={msg.id}
@@ -400,8 +569,8 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 {msg.direction === 'inbound' && (
-                  <div className={styles.msgAvatar}>
-                    {customerName ? customerName.slice(-1) : '客'}
+                  <div className={styles.msgAvatar} style={{ background: customer?.assignedToId === 'sub_1' ? '#722ED1' : customer?.assignedToId === 'sub_2' ? '#FA8C16' : customer?.assignedToId === 'sub_3' ? '#13C2C2' : '#3b82f6', color: '#fff' }}>
+                    {customer?.isGroup ? (customerName || '群聊').substring(0, 2) : (customerName ? customerName.slice(-2) : '客')}
                   </div>
                 )}
                 <div className={styles.messageBubble}>

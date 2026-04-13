@@ -88,15 +88,20 @@ export default function LeadsPage() {
     return result;
   }, [customers, searchTerm, activeFilter, chatType, activeWorkspace]);
 
+  const workspaceCustomers = useMemo(() => {
+    if (activeWorkspace === 'main') return customers || [];
+    return (customers || []).filter(c => c.assignedToId === activeWorkspace);
+  }, [customers, activeWorkspace]);
+
   const basicGroup = [
-    { key: 'all', label: '全部消息', icon: '💬', count: customers.length },
-    { key: 'unread', label: '未读消息', icon: '📩', count: customers.filter(c => (c.unreadCount || 0) > 0).length },
+    { key: 'all', label: '全部消息', icon: '💬', count: workspaceCustomers.length },
+    { key: 'unread', label: '未读消息', icon: '📩', count: workspaceCustomers.filter(c => (c.unreadCount || 0) > 0).length },
   ];
 
   const aiGroup = [
-    { key: 'ai_handling', label: 'AI自动回复中', icon: '🤖', count: customers.filter(c => (c.tags || []).some(t => t.name === 'AI接待')).length },
+    { key: 'ai_handling', label: 'AI自动回复中', icon: '🤖', count: workspaceCustomers.filter(c => (c.tags || []).some(t => t.name === 'AI接待')).length },
     { key: 'suggest', label: '建议回复', icon: '💡', count: 0 },
-    { key: 'manual', label: '需人工介入', icon: '👤', count: customers.filter(c => !(c.tags || []).some(t => t.name === 'AI接待')).length }
+    { key: 'manual', label: '需人工介入', icon: '👤', count: workspaceCustomers.filter(c => !(c.tags || []).some(t => t.name === 'AI接待')).length }
   ];
 
   return (
@@ -128,22 +133,22 @@ export default function LeadsPage() {
             className={`${styles.sidebarItem} ${activeWorkspace === 'sub_1' ? styles.sidebarItemActive : ''}`}
             onClick={() => { setActiveWorkspace('sub_1'); setShowGroupMenu(false); }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=A" alt="W1" className={styles.workspaceAvatar} />
-            <span className={styles.sidebarItemLabel}>AI顾问-门店1</span>
+            <span className={styles.sidebarItemIcon} style={{ background: '#722ED1', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>A</span>
+            <span className={styles.sidebarItemLabel}>门店1</span>
           </div>
           <div
             className={`${styles.sidebarItem} ${activeWorkspace === 'sub_2' ? styles.sidebarItemActive : ''}`}
             onClick={() => { setActiveWorkspace('sub_2'); setShowGroupMenu(false); }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=B" alt="W2" className={styles.workspaceAvatar} />
-            <span className={styles.sidebarItemLabel}>AI顾问-门店2</span>
+            <span className={styles.sidebarItemIcon} style={{ background: '#FA8C16', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>B</span>
+            <span className={styles.sidebarItemLabel}>门店2</span>
           </div>
           <div
             className={`${styles.sidebarItem} ${activeWorkspace === 'sub_3' ? styles.sidebarItemActive : ''}`}
             onClick={() => { setActiveWorkspace('sub_3'); setShowGroupMenu(false); }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=C" alt="W3" className={styles.workspaceAvatar} />
-            <span className={styles.sidebarItemLabel}>AI顾问-门店3</span>
+            <span className={styles.sidebarItemIcon} style={{ background: '#13C2C2', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>C</span>
+            <span className={styles.sidebarItemLabel}>门店3</span>
           </div>
         </div>
 

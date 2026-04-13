@@ -9,21 +9,21 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customerId');
 
+    const isAll = searchParams.get('all') === 'true';
     if (!customerId) return NextResponse.json([], { status: 400 });
 
-    const conversations = await prisma.conversation.findMany({
-      where: { customerId },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' }
-        }
-      }
-    });
+    const queryArgs = {
+      where: { conversation: { customerId } },
+      orderBy: { createdAt: 'desc' }
+    };
+    if (!isAll) queryArgs.take = 40;
 
-    if (!conversations.length) return NextResponse.json([]);
+    const messagesData = await prisma.message.findMany(queryArgs);
 
-    // Return messages in the format ChatPanel expects
-    const messages = conversations[conversations.length - 1].messages.map(m => ({
+    if (!messagesData.length) return NextResponse.json([]);
+
+    // Return messages in the format ChatPanel expects, reversed to chronological
+    const messages = messagesData.reverse().map(m => ({
       id: m.id,
       direction: m.direction,
       senderType: m.senderType,
