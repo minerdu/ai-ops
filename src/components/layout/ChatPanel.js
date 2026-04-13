@@ -412,10 +412,10 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                     </div>
                   )}
                   <div className={styles.messageContent}>
-                    {(msg.content || '').split('\n').map((line, i) => (
+                    {((typeof msg.content === 'string' ? msg.content : (msg.content ? JSON.stringify(msg.content) : ''))).split('\n').map((line, i) => (
                       <span key={i}>
                         {line}
-                        {i < (msg.content || '').split('\n').length - 1 && <br />}
+                        {i < ((typeof msg.content === 'string' ? msg.content : (msg.content ? JSON.stringify(msg.content) : ''))).split('\n').length - 1 && <br />}
                       </span>
                     ))}
                   </div>
