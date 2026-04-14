@@ -28,6 +28,9 @@ export default function MaterialsPage() {
   const [materials, setMaterials] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
+  
+  // Use store to navigate back to settings
+  const setActiveMainPanel = require('@/lib/store').default(s => s.setActiveMainPanel);
 
   useEffect(() => {
     fetchMaterials();
@@ -56,8 +59,16 @@ export default function MaterialsPage() {
 
   return (
     <div className={styles.materialsPage}>
+      <div className={styles.header}>
+        <button className={styles.backBtnIOS} onClick={() => setActiveMainPanel('settings')}>
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span className={styles.backBtnText}>返回</span>
+        </button>
+        <h2 className={styles.title}>运营素材</h2>
+      </div>
+
       {/* Tabs */}
-      <div className={styles.tabsRow}>
+      <div className={styles.tabsRow} style={{ marginTop: '10px' }}>
         {tabs.map((tab) => (
           <button
             key={tab}

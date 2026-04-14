@@ -103,7 +103,7 @@ export default function YouzanConfigPanel() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <span className={styles.headerIcon}>🔗</span>
+        <span className={styles.headerIcon} style={{ display: 'flex', color: 'var(--color-primary)', alignItems: 'center' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></span>
         <div>
           <h3 className={styles.headerTitle}>CRM 系统接入</h3>
           <p className={styles.headerDesc}>连接您现有的客户管理系统，进行数据同步</p>
@@ -135,8 +135,8 @@ export default function YouzanConfigPanel() {
 
       {/* 凭证配置 */}
       <div className={styles.fieldGroup}>
-        <div className={styles.field}>
-          <label className={styles.label}>{crmProvider === 'custom' ? 'API 接入点 / Base URL' : 'App ID（应用标识）'}</label>
+        <div className={styles.field} style={{ padding: '16px', backgroundColor: '#F0F9FF', borderRadius: '8px', marginBottom: '8px' }}>
+          <label className={styles.label} style={{ color: '#0284C7' }}>{crmProvider === 'custom' ? 'API 接入点 / Base URL' : 'App ID（应用标识）'}</label>
           <input
             type="text"
             className={styles.input}
@@ -146,8 +146,8 @@ export default function YouzanConfigPanel() {
           />
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label}>App Secret</label>
+        <div className={styles.field} style={{ padding: '16px', backgroundColor: '#F0FDF4', borderRadius: '8px', marginBottom: '8px' }}>
+          <label className={styles.label} style={{ color: '#059669' }}>App Secret</label>
           <input
             type="password"
             className={styles.input}
@@ -157,8 +157,8 @@ export default function YouzanConfigPanel() {
           />
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label}>店铺 ID</label>
+        <div className={styles.field} style={{ padding: '16px', backgroundColor: '#FFFBEB', borderRadius: '8px', marginBottom: '8px' }}>
+          <label className={styles.label} style={{ color: '#D97706' }}>店铺 ID</label>
           <input
             type="text"
             className={styles.input}

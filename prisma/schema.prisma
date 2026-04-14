@@ -212,17 +212,38 @@ model Material {
 // --------------------------------------------------------
 
 model AiModelConfig {
-  id           String   @id @default("default")
-  provider     String   @default("openai")     // openai, deepseek, zhipu, qwen, custom
-  apiBaseUrl   String   @default("")           // API 接入点 URL
-  apiKey       String   @default("")           // API Key
-  modelName    String   @default("")           // 模型名称，如 gpt-4o, deepseek-chat
-  temperature  Float    @default(0.7)          // 温度参数
-  maxTokens    Int      @default(800)          // 最大回复 token 数
-  systemPrompt String   @default("")           // 系统提示词（覆盖默认）
-  enabled      Boolean  @default(false)        // 是否启用真实 AI（false 则用 mock）
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default("default")
+  provider            String   @default("openai")     // openai, deepseek, zhipu, qwen, custom
+  apiBaseUrl          String   @default("")           // API 接入点 URL
+  apiKey              String   @default("")           // API Key
+  modelName           String   @default("")           // 模型名称，如 gpt-4o, deepseek-chat
+  temperature         Float    @default(0.7)          // 温度参数
+  maxTokens           Int      @default(800)          // 最大回复 token 数
+  systemPrompt        String   @default("")           // 系统提示词（覆盖默认）
+  enabled             Boolean  @default(false)        // 是否启用真实 AI（false 则用 mock）
+
+  // Knowledge Base fields
+  kbSource            String   @default("default")
+  kbId                String   @default("")
+  kbApiUrl            String   @default("")
+  
+  // Segmentation fields
+  enableSegment       Boolean  @default(true)
+  segmentMaxChars     Int      @default(200)
+  segmentCount        Int      @default(3)
+  segmentTriggerChars Int      @default(100)
+  segmentModelName    String   @default("")
+  segmentModelApiUrl  String   @default("")
+  segmentModelApiKey  String   @default("")
+
+  // Advanced fields
+  sendInterval        Float    @default(2.0)
+  stopKeywords        String   @default("")
+  smartSkipMode       Boolean  @default(true)
+  imageAnalysis       Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 // --------------------------------------------------------

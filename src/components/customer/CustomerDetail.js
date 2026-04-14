@@ -249,7 +249,7 @@ export default function CustomerDetail({ customerId, onClose }) {
                   <div className={styles.prefProjects}>
                     <span className={styles.lbl}>重点高频项目：</span>
                     <div className={styles.tagFlow}>
-                      {crm.preferences.preferredProjects.map((p, i) => (
+                      {crm.preferences.preferredProjects && crm.preferences.preferredProjects.map((p, i) => (
                         <span key={i} className={styles.prefChipPrimary}>{p}</span>
                       ))}
                     </div>

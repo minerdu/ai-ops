@@ -8,22 +8,25 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customerId');
+    const loadAll = searchParams.get('all') === 'true';
 
     if (!customerId) return NextResponse.json([], { status: 400 });
 
-    const conversations = await prisma.conversation.findMany({
-      where: { customerId },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' }
-        }
-      }
-    });
+    const queryOptions = {
+      where: { conversation: { customerId } },
+      orderBy: { createdAt: 'desc' },
+    };
+    // Only limit to 40 if not requesting all history
+    if (!loadAll) {
+      queryOptions.take = 40;
+    }
 
-    if (!conversations.length) return NextResponse.json([]);
+    const messagesData = await prisma.message.findMany(queryOptions);
 
-    // Return messages in the format ChatPanel expects
-    const messages = conversations[conversations.length - 1].messages.map(m => ({
+    if (!messagesData.length) return NextResponse.json([]);
+
+    // Return messages in the format ChatPanel expects, reversed to chronological
+    const messages = messagesData.reverse().map(m => ({
       id: m.id,
       direction: m.direction,
       senderType: m.senderType,

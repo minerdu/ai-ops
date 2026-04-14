@@ -81,7 +81,7 @@ ${customerSummary}
     "type": "send_coupon | send_message | send_material | create_reminder | batch_tag",
     "title": "任务标题",
     "content": "要发送给客户的具体内容（用亲切专业的美业顾问口吻撰写）",
-    "needApproval": true或false(涉及金额返true)
+    "needApproval": true或false(规则：涉及优惠券/折扣/金额超过100元等财务操作设为true，其他一律设为false)
   },
   "summary": "用中文向运营者汇报的执行摘要（100字以内）"
 }
@@ -99,8 +99,8 @@ ${customerSummary}
     {"day_offset": 2, "time": "14:00", "title": "第2步标题", "action": {"type": "send_message"}, "content": "第2步要发的消息内容"},
     {"day_offset": 4, "time": "10:00", "title": "第3步标题", "action": {"type": "send_message"}, "content": "第3步要发的消息内容"}
   ],
-  "needApproval": true,
-  "summary": "用中文向运营者汇报的执行摘要（100字以内）"
+  "needApproval": true或false(规则：涉及优惠券/折扣/金额超过100元等财务操作设为true，其他一律设为false),
+  "summary": "向运营者汇报的多步执行计划摘要（100字以内）"
 }
 
 注意：
@@ -212,8 +212,8 @@ export async function POST(request) {
           title: plan.action?.title || '自然语言指令任务',
           taskType: plan.action?.type === 'send_material' ? 'image' : 'text',
           content: plan.action?.content || command,
-          triggerSource: 'ai',
-          triggerReason: `运营指令: "${command.substring(0, 50)}"`,
+          triggerSource: 'manual_command',
+          triggerReason: `📋 人工运营指令: "${command.substring(0, 50)}"`,
           approvalStatus: 'pending', // 先设 pending，由 auto-review 决定
           executeStatus: 'draft',
         },

@@ -71,10 +71,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
-
-.avatar:nth-child(1) .avatarText { background: linear-gradient(135deg, #f093fb, #f5576c); }
 
 .onlineDot {
   position: absolute;

@@ -50,6 +50,17 @@ export default function CustomerCard({ customer, style, selectable, selected, on
     }
   };
 
+  const avatarText = customer.isGroup 
+    ? (customer.name || '群聊').substring(0, 2) 
+    : (customer.name || '未知').slice(-2);
+
+  const getAvatarColor = () => {
+    if (customer.assignedToId === 'sub_1') return '#722ED1';
+    if (customer.assignedToId === 'sub_2') return '#FA8C16';
+    if (customer.assignedToId === 'sub_3') return '#13C2C2';
+    return '#3b82f6';
+  };
+
   return (
     <div
       className={`${styles.card} ${isSelected ? styles.cardSelected : ''} animate-fadeInUp`}
@@ -72,12 +83,12 @@ export default function CustomerCard({ customer, style, selectable, selected, on
         )}
 
         {/* Avatar */}
-        <div className={styles.avatar}>
+        <div className={styles.avatar} style={{ background: customer.avatar ? 'transparent' : getAvatarColor() }}>
           {customer.avatar ? (
             <img src={customer.avatar} alt={customer.name} />
           ) : (
-            <span className={styles.avatarText}>
-              {(customer.name || '未知').slice(-2)}
+            <span className={styles.avatarText} style={{ color: '#fff' }}>
+              {avatarText}
             </span>
           )}
           {customer.silentDays === 0 && (

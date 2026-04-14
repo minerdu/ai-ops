@@ -66,14 +66,16 @@ export default function TasksPage() {
     }
   };
 
-  // Stats computed from tasks
-  const stats = useMemo(() => ({
-    pending: tasks.filter(t => t.approvalStatus === 'pending').length,
-    toExecute: tasks.filter(t => t.approvalStatus === 'approved' && t.executeStatus === 'scheduled').length,
-    completed: tasks.filter(t => t.executeStatus === 'success').length,
-    rejected: tasks.filter(t => t.approvalStatus === 'rejected').length,
-    rejectRate: tasks.length > 0 ? Math.round((tasks.filter(t => t.approvalStatus === 'rejected').length / tasks.length) * 100) : 0,
-  }), [tasks]);
+  const stats = useMemo(() => {
+    const manualTasks = tasks.filter(t => t.triggerSource === 'manual_command');
+    return {
+      pending: tasks.filter(t => t.approvalStatus === 'pending').length,
+      toExecute: tasks.filter(t => t.approvalStatus === 'approved' && t.executeStatus === 'scheduled').length,
+      completed: tasks.filter(t => t.executeStatus === 'success').length,
+      rejected: tasks.filter(t => t.approvalStatus === 'rejected').length,
+      rejectRate: manualTasks.length > 0 ? Math.round(manualTasks.filter(t => t.approvalStatus === 'rejected').length / manualTasks.length * 100) : 0,
+    };
+  }, [tasks]);
 
   const filteredTasks = useMemo(() => {
     switch (activeTab) {
@@ -156,7 +158,7 @@ export default function TasksPage() {
   };
 
   const typeLabels = { text: '文本消息', combo: '组合消息', image: '图片消息', video: '视频消息' };
-  const sourceLabels = { sop: 'SOP触发', ai: 'AI生成', manual: '手动创建' };
+  const sourceLabels = { sop: 'SOP触发', ai: 'AI生成', manual: '手动创建', journey: '🤖 旅程自动', 'manual_command': '📋 人工指令', 'ai-sop': 'SOP编排' };
 
   return (
     <div className={styles.tasksPage}>

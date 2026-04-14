@@ -22,6 +22,24 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
   const messagesEndRef = useRef(null);
   const prevCustomerIdRef = useRef(customerId);
   const toast = useToast();
+  
+  const customer = useStore(s => s.customers.find(c => c.id === customerId));
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
+  const [isAllLoaded, setIsAllLoaded] = useState(false);
+
+  const handleLoadFullHistory = async () => {
+    setIsLoadingAll(true);
+    try {
+      const res = await fetch(`/api/messages?customerId=${customerId}&all=true`);
+      const data = await res.json();
+      setMessages(data);
+      setIsAllLoaded(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingAll(false);
+    }
+  };
 
   useEffect(() => {
     if (prevCustomerIdRef.current !== customerId) {
@@ -90,11 +108,11 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
       });
       const data = await res.json();
 
-      if (data.success && data.type === 'workflow') {
+      if (data.success && (data.type === 'workflow' || data.type === 'sop_workflow')) {
         setCommandMessages(prev => [...prev, {
           id: `result-${Date.now()}`,
           role: 'system',
-          type: 'workflow',
+          type: data.type === 'sop_workflow' ? 'sop_workflow' : 'workflow',
           data: data,
           time: new Date().toISOString(),
         }]);
@@ -200,38 +218,153 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
     toast.success('已转接人工，AI 已暂停回复');
   };
 
+  const [journeyExpanded, setJourneyExpanded] = useState(false);
+  const [journeyStats, setJourneyStats] = useState(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+  useEffect(() => {
+    if (!customerId) {
+      setIsLoadingStats(true);
+      fetch('/api/tasks')
+        .then(r => r.json())
+        .then(data => {
+          const tasks = Array.isArray(data) ? data : [];
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const todayTasks = tasks.filter(t => new Date(t.scheduledAt || t.createdAt) >= today);
+          const journeyTasks = tasks.filter(t => t.triggerSource === 'journey');
+          
+          const stages = [
+            { key: 'new_ice', label: '新客破冰', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1890ff" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, count: 0 },
+            { key: 'intent_chat', label: '需求沟通', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#52c41a" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, count: 0 },
+            { key: 'convert', label: '客户转化', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fa8c16" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>, count: 0 },
+            { key: 'order', label: '下单购买', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5222d" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, count: 0 },
+            { key: 'visit', label: '到店体验', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#722ed1" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, count: 0 },
+            { key: 'aftercare', label: '客户关怀', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eb2f96" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>, count: 0 },
+            { key: 'upsell', label: '升单复购', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#faad14" strokeWidth="2"><path d="M12 20V10"/><path d="m18 14-6-6-6 6"/></svg>, count: 0 },
+            { key: 'followup', label: '跟进提醒', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#13c2c2" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>, count: 0 },
+            { key: 'reactivate', label: '沉默激活', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0d911" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>, count: 0 },
+          ];
+          journeyTasks.forEach(t => {
+            const reason = t.triggerReason || '';
+            if (reason.includes('新客破冰')) stages[0].count++;
+            else if (reason.includes('需求沟通')) stages[1].count++;
+            else if (reason.includes('转化')) stages[2].count++;
+            else if (reason.includes('下单') || reason.includes('购买')) stages[3].count++;
+            else if (reason.includes('到店') || reason.includes('体验')) stages[4].count++;
+            else if (reason.includes('关怀')) stages[5].count++;
+            else if (reason.includes('升单') || reason.includes('复购')) stages[6].count++;
+            else if (reason.includes('跟进')) stages[7].count++;
+            else if (reason.includes('激活') || reason.includes('沉默')) stages[8].count++;
+            else stages[1].count++;
+          });
+          
+          setJourneyStats({
+            totalJourney: journeyTasks.length,
+            todayCount: todayTasks.filter(t => t.triggerSource === 'journey').length,
+            stages,
+            executedRate: journeyTasks.length > 0 ? Math.round(journeyTasks.filter(t => t.executeStatus === 'success').length / journeyTasks.length * 100) : 0,
+          });
+        })
+        .catch(console.error)
+        .finally(() => setIsLoadingStats(false));
+    }
+  }, [customerId]);
+
   // ==========================================
-  // 运营指挥中心模式（未选择客户时）
+  // 运营指挥中心模式（未选择客户时）— 统一布局
   // ==========================================
   if (!customerId) {
     return (
       <div className={styles.chatPanel}>
+        {/* ===== TOP: Collapsible Journey Status Bar ===== */}
+        <div
+          onClick={() => setJourneyExpanded(!journeyExpanded)}
+          style={{
+            padding: '12px 16px',
+            background: 'linear-gradient(135deg, #E6F7EF, #F0FFF4)',
+            borderBottom: '1px solid #B7EB8F',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.2s',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#07C160', display: 'inline-block', boxShadow: '0 0 6px #07C160' }} />
+            <span style={{ fontSize: '13px', fontWeight: '600', color: '#07C160' }}>
+              AI 自主运营引擎运行中
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {journeyStats && (
+              <span style={{ fontSize: '12px', color: '#52c41a' }}>
+                今日 {journeyStats.todayCount} 条 · 总计 {journeyStats.totalJourney}
+              </span>
+            )}
+            <span style={{ fontSize: '16px', color: '#52c41a', transition: 'transform 0.3s', transform: journeyExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+          </div>
+        </div>
+
+        {/* Expanded Journey Details */}
+        {journeyExpanded && journeyStats && (
+          <div style={{ padding: '12px 16px', background: 'var(--color-bg-section)', borderBottom: '1px solid var(--color-border-light)', flexShrink: 0 }}>
+            {/* Mini Stats Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ padding: '10px', background: 'linear-gradient(135deg, #E6F7EF, #D4EFDF)', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#07C160' }}>{journeyStats.totalJourney}</div>
+                <div style={{ fontSize: '10px', color: '#52c41a' }}>旅程任务</div>
+              </div>
+              <div style={{ padding: '10px', background: 'linear-gradient(135deg, #E6F4FF, #D6E4FF)', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#1890ff' }}>{journeyStats.todayCount}</div>
+                <div style={{ fontSize: '10px', color: '#597ef7' }}>今日执行</div>
+              </div>
+              <div style={{ padding: '10px', background: 'linear-gradient(135deg, #FFF7E6, #FFE7BA)', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#FA8C16' }}>{journeyStats.executedRate}%</div>
+                <div style={{ fontSize: '10px', color: '#d48806' }}>完成率</div>
+              </div>
+            </div>
+            {/* Journey Stages - Horizontal Scroll */}
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+              {journeyStats.stages.map((stage, i) => (
+                <div key={i} style={{
+                  minWidth: '72px', padding: '8px 6px', background: 'var(--color-bg-card)',
+                  borderRadius: '10px', textAlign: 'center', border: '1px solid var(--color-border-light)',
+                  flexShrink: 0,
+                }}>
+                  <div style={{ fontSize: '18px' }}>{stage.icon}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginTop: '2px', whiteSpace: 'nowrap' }}>{stage.label}</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: stage.count > 0 ? '#07C160' : 'var(--color-text-tertiary)', marginTop: '2px' }}>{stage.count}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===== MIDDLE: Command Messages Area ===== */}
         <div className={styles.messagesArea}>
           {commandMessages.length === 0 ? (
             <div className={styles.emptyChat}>
-              <div className={styles.emptyChatIcon}>🎯</div>
-              <h3 className={styles.emptyChatTitle}>运营指挥中心</h3>
+              <div className={styles.emptyChatIcon}>📋</div>
+              <h3 className={styles.emptyChatTitle}>AI智能运营中心</h3>
               <p className={styles.emptyChatDesc}>用自然语言下达运营指令，AI 将自动解析并执行</p>
               <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
                 {[
-                  '🎁 对高意向客户发送体验优惠券',
-                  '🔔 激活所有沉默客户',
-                  '💎 给VIP客户发送专属福利通知',
-                  '📣 向未消费客户推荐新人套餐',
+                  '🎁 对高意向客户发送200元体验优惠券',
+                  '📣 五一活动通知全部VIP客户',
+                  '💎 给V6客户发送年度专属礼遇',
+                  '🔄 为沉默客户做3次破冰SOP',
                 ].map((hint, i) => (
                   <button
                     key={i}
                     onClick={() => { setInputValue(hint.substring(2).trim()); }}
                     style={{
-                      padding: '10px 14px',
-                      background: 'var(--color-bg-card)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '10px',
-                      fontSize: '13px',
-                      color: 'var(--color-text-secondary)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s',
+                      padding: '10px 14px', background: 'var(--color-bg-card)',
+                      border: '1px solid var(--color-border)', borderRadius: '10px',
+                      fontSize: '13px', color: 'var(--color-text-secondary)',
+                      cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
                     }}
                     onMouseEnter={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.color = 'var(--color-primary)'; }}
                     onMouseLeave={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.color = 'var(--color-text-secondary)'; }}
@@ -247,11 +380,11 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                     <div className={styles.msgAvatar} style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}>🤖</div>
                   )}
                   <div className={styles.messageBubble}>
-                    {msg.role === 'system' && msg.type === 'workflow' ? (
+                    {msg.role === 'system' && (msg.type === 'workflow' || msg.type === 'sop_workflow') ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div className={styles.aiLabel}>
-                          <span className={styles.aiIcon}>⚡</span>
-                          <span>工作流已生成</span>
+                          <span className={styles.aiIcon}>{msg.type === 'sop_workflow' ? '📋' : '⚡'}</span>
+                          <span>{msg.type === 'sop_workflow' ? 'SOP 工作流已编排' : '工作流已生成'}</span>
                         </div>
                         <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
                           🎯 {msg.data.plan?.intent}
@@ -259,41 +392,44 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                         <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
                           <div>🔍 筛选条件：{msg.data.plan?.filterDesc}</div>
                           <div>📌 命中客户：{msg.data.execution?.targetCount} 位</div>
-                          <div>📝 任务名：{msg.data.plan?.actionTitle}</div>
+                          {msg.type === 'sop_workflow' && <div>📊 编排步数：{msg.data.plan?.steps} 步</div>}
+                          {msg.type !== 'sop_workflow' && <div>📝 任务名：{msg.data.plan?.actionTitle}</div>}
                         </div>
                         {msg.data.execution?.targetNames?.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                             {msg.data.execution.targetNames.map((name, i) => (
-                              <span key={i} style={{
-                                padding: '2px 8px',
-                                background: '#E6F7EF',
-                                color: '#07C160',
-                                borderRadius: '10px',
-                                fontSize: '11px',
-                                fontWeight: '500',
-                              }}>{name}</span>
+                              <span key={i} style={{ padding: '2px 8px', background: '#E6F7EF', color: '#07C160', borderRadius: '10px', fontSize: '11px', fontWeight: '500' }}>{name}</span>
                             ))}
                           </div>
                         )}
-                        <div style={{
-                          padding: '10px',
-                          background: 'var(--color-bg-page)',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          color: 'var(--color-text-secondary)',
-                          lineHeight: '1.5',
-                          borderLeft: '3px solid var(--color-primary)',
-                        }}>
-                          📨 发送内容：{msg.data.plan?.actionContent}
-                        </div>
-                        <div style={{
-                          padding: '8px 12px',
-                          background: msg.data.plan?.needApproval ? '#FFF7E6' : '#E6F7EF',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: msg.data.plan?.needApproval ? '#FA8C16' : '#07C160',
-                        }}>
+                        {msg.type === 'sop_workflow' && msg.data.execution?.tasks?.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {/* Group tasks by step */}
+                            {(() => {
+                              const steps = {};
+                              msg.data.execution.tasks.forEach(t => {
+                                const key = `第${t.step}步`;
+                                if (!steps[key]) steps[key] = { ...t, count: 0 };
+                                steps[key].count++;
+                              });
+                              return Object.entries(steps).map(([stepName, info], idx) => (
+                                <div key={idx} style={{ padding: '8px 12px', background: idx % 2 === 0 ? '#F0F9FF' : '#FFFBEB', borderRadius: '8px', fontSize: '12px', borderLeft: `3px solid ${idx % 2 === 0 ? '#3B82F6' : '#F59E0B'}` }}>
+                                  <div style={{ fontWeight: '600', color: idx % 2 === 0 ? '#1D4ED8' : '#D97706' }}>{stepName}：{msg.data.execution.tasks.find(t => t.step === (idx + 1))?.customerName && `${info.count} 条任务`}</div>
+                                  <div style={{ color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                                    排期：{new Date(info.scheduledAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                    {' · '}{info.status}
+                                  </div>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        )}
+                        {msg.type !== 'sop_workflow' && (
+                          <div style={{ padding: '10px', background: 'var(--color-bg-page)', borderRadius: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '1.5', borderLeft: '3px solid var(--color-primary)' }}>
+                            📨 发送内容：{msg.data.plan?.actionContent}
+                          </div>
+                        )}
+                        <div style={{ padding: '8px 12px', background: msg.data.plan?.needApproval ? '#FFF7E6' : '#E6F7EF', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: msg.data.plan?.needApproval ? '#FA8C16' : '#07C160' }}>
                           {msg.data.plan?.needApproval
                             ? `⚠️ 涉及财务，已提交审批中心等待确认 (${msg.data.execution?.tasksCreated} 条)`
                             : `✅ 已自动排期执行 ${msg.data.execution?.tasksCreated} 条任务`}
@@ -316,7 +452,22 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                       <div className={styles.messageContent}>{msg.content}</div>
                     )}
                     <div className={styles.messageTime}>
-                      {new Date(msg.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                      {(() => {
+                        const d = new Date(msg.time);
+                        const now = new Date();
+                        const isToday = d.toDateString() === now.toDateString();
+                        const yesterday = new Date(now);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const isYesterday = d.toDateString() === yesterday.toDateString();
+                        const isSameYear = d.getFullYear() === now.getFullYear();
+                        const time = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                        if (isToday) return `今天 ${time}`;
+                        if (isYesterday) return `昨天 ${time}`;
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        if (isSameYear) return `${month}/${day} ${time}`;
+                        return `${d.getFullYear()}/${month}/${day} ${time}`;
+                      })()}
                     </div>
                   </div>
                   {msg.role === 'user' && (
@@ -342,7 +493,8 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
             </div>
           )}
         </div>
-        {/* Command Input */}
+
+        {/* ===== BOTTOM: Command Input (always visible) ===== */}
         <div className={styles.inputAreaWrapper}>
           <div className={styles.inputArea}>
             <div className={styles.inputWrapper}>
@@ -391,6 +543,17 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
           </div>
         ) : (
           <div className={styles.messagesList}>
+            {!isAllLoaded && messages.length >= 40 && (
+              <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                <button 
+                  onClick={handleLoadFullHistory}
+                  disabled={isLoadingAll}
+                  style={{ padding: '6px 16px', fontSize: '12px', background: '#e6f7ff', color: '#1890ff', border: '1px solid #91d5ff', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  {isLoadingAll ? '加载中...' : '↑ 点击查看完整沟通记录'}
+                </button>
+              </div>
+            )}
             {messages.map((msg, index) => (
               <div
                 key={msg.id}
@@ -400,8 +563,8 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 {msg.direction === 'inbound' && (
-                  <div className={styles.msgAvatar}>
-                    {customerName ? customerName.slice(-1) : '客'}
+                  <div className={styles.msgAvatar} style={{ background: customer?.assignedToId === 'sub_1' ? '#722ED1' : customer?.assignedToId === 'sub_2' ? '#FA8C16' : customer?.assignedToId === 'sub_3' ? '#13C2C2' : '#3b82f6', color: '#fff' }}>
+                    {customer?.isGroup ? (customerName || '群聊').substring(0, 2) : (customerName ? customerName.slice(-2) : '客')}
                   </div>
                 )}
                 <div className={styles.messageBubble}>
@@ -412,18 +575,30 @@ export default function ChatPanel({ customerName, customerId, initialMessages })
                     </div>
                   )}
                   <div className={styles.messageContent}>
-                    {(msg.content || '').split('\n').map((line, i) => (
+                    {((typeof msg.content === 'string' ? msg.content : (msg.content ? JSON.stringify(msg.content) : ''))).split('\n').map((line, i) => (
                       <span key={i}>
                         {line}
-                        {i < (msg.content || '').split('\n').length - 1 && <br />}
+                        {i < ((typeof msg.content === 'string' ? msg.content : (msg.content ? JSON.stringify(msg.content) : ''))).split('\n').length - 1 && <br />}
                       </span>
                     ))}
                   </div>
                   <div className={styles.messageTime}>
-                    {new Date(msg.createdAt).toLocaleTimeString('zh-CN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {(() => {
+                      const d = new Date(msg.createdAt);
+                      const now = new Date();
+                      const isToday = d.toDateString() === now.toDateString();
+                      const yesterday = new Date(now);
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      const isYesterday = d.toDateString() === yesterday.toDateString();
+                      const isSameYear = d.getFullYear() === now.getFullYear();
+                      const time = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                      if (isToday) return `今天 ${time}`;
+                      if (isYesterday) return `昨天 ${time}`;
+                      const month = String(d.getMonth() + 1).padStart(2, '0');
+                      const day = String(d.getDate()).padStart(2, '0');
+                      if (isSameYear) return `${month}/${day} ${time}`;
+                      return `${d.getFullYear()}/${month}/${day} ${time}`;
+                    })()}
                   </div>
                 </div>
                 {msg.direction === 'outbound' && (

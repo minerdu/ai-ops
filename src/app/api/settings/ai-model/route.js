@@ -30,14 +30,11 @@ export async function PUT(request) {
   try {
     const body = await request.json();
     const {
-      provider,
-      apiBaseUrl,
-      apiKey,
-      modelName,
-      temperature,
-      maxTokens,
-      systemPrompt,
-      enabled,
+      provider, apiBaseUrl, apiKey, modelName, temperature, maxTokens, systemPrompt, enabled,
+      kbSource, kbId, kbApiUrl,
+      enableSegment, segmentMaxChars, segmentCount, segmentTriggerChars,
+      segmentModelName, segmentModelApiUrl, segmentModelApiKey,
+      sendInterval, stopKeywords, smartSkipMode, imageAnalysis
     } = body;
 
     const data = {};
@@ -48,6 +45,30 @@ export async function PUT(request) {
     if (maxTokens !== undefined) data.maxTokens = parseInt(maxTokens, 10);
     if (systemPrompt !== undefined) data.systemPrompt = systemPrompt;
     if (enabled !== undefined) data.enabled = enabled;
+    
+    // Knowledge Base fields
+    if (kbSource !== undefined) data.kbSource = kbSource;
+    if (kbId !== undefined) data.kbId = kbId;
+    if (kbApiUrl !== undefined) data.kbApiUrl = kbApiUrl;
+
+    // Segmentation fields
+    if (enableSegment !== undefined) data.enableSegment = enableSegment;
+    if (segmentMaxChars !== undefined) data.segmentMaxChars = parseInt(segmentMaxChars, 10);
+    if (segmentCount !== undefined) data.segmentCount = parseInt(segmentCount, 10);
+    if (segmentTriggerChars !== undefined) data.segmentTriggerChars = parseInt(segmentTriggerChars, 10);
+    if (segmentModelName !== undefined) data.segmentModelName = segmentModelName;
+    if (segmentModelApiUrl !== undefined) data.segmentModelApiUrl = segmentModelApiUrl;
+    // Update API keys properly securely
+    if (segmentModelApiKey && !segmentModelApiKey.startsWith('••••')) {
+      data.segmentModelApiKey = segmentModelApiKey;
+    }
+
+    // Advanced fields
+    if (sendInterval !== undefined) data.sendInterval = parseFloat(sendInterval);
+    if (stopKeywords !== undefined) data.stopKeywords = stopKeywords;
+    if (smartSkipMode !== undefined) data.smartSkipMode = smartSkipMode;
+    if (imageAnalysis !== undefined) data.imageAnalysis = imageAnalysis;
+
     // Only update API key if a real new key is provided (not the masked placeholder)
     if (apiKey && !apiKey.startsWith('••••')) {
       data.apiKey = apiKey;

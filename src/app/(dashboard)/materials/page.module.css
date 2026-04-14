@@ -4,6 +4,44 @@
   height: 100%;
 }
 
+.header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-bg-page);
+  z-index: 10;
+  position: sticky;
+  top: 0;
+}
+
+.backBtnIOS {
+  display: inline-flex;
+  align-items: center;
+  color: #007aff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: -8px;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.backBtnText {
+  margin-left: -4px;
+  font-weight: 500;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
 .tabsRow {
   display: flex;
   gap: var(--space-1);

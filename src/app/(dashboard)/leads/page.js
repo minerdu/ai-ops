@@ -88,15 +88,20 @@ export default function LeadsPage() {
     return result;
   }, [customers, searchTerm, activeFilter, chatType, activeWorkspace]);
 
+  const workspaceCustomers = useMemo(() => {
+    if (activeWorkspace === 'main') return customers || [];
+    return (customers || []).filter(c => c.assignedToId === activeWorkspace);
+  }, [customers, activeWorkspace]);
+
   const basicGroup = [
-    { key: 'all', label: '全部消息', icon: '💬', count: customers.length },
-    { key: 'unread', label: '未读消息', icon: '📩', count: customers.filter(c => (c.unreadCount || 0) > 0).length },
+    { key: 'all', label: '全部消息', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>, count: workspaceCustomers.length },
+    { key: 'unread', label: '未读消息', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, count: workspaceCustomers.filter(c => (c.unreadCount || 0) > 0).length },
   ];
 
   const aiGroup = [
-    { key: 'ai_handling', label: 'AI自动回复中', icon: '🤖', count: customers.filter(c => (c.tags || []).some(t => t.name === 'AI接待')).length },
-    { key: 'suggest', label: '建议回复', icon: '💡', count: 0 },
-    { key: 'manual', label: '需人工介入', icon: '👤', count: customers.filter(c => !(c.tags || []).some(t => t.name === 'AI接待')).length }
+    { key: 'ai_handling', label: 'AI自动回复中', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>, count: workspaceCustomers.filter(c => (c.tags || []).some(t => t.name === 'AI接待')).length },
+    { key: 'suggest', label: '建议回复', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="Mm4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M6.34 17.66l-1.41 1.41"></path><path d="M19.07 4.93l-1.41 1.41"></path></svg>, count: 0 },
+    { key: 'manual', label: '需人工介入', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>, count: workspaceCustomers.filter(c => !(c.tags || []).some(t => t.name === 'AI接待')).length }
   ];
 
   return (
@@ -121,29 +126,37 @@ export default function LeadsPage() {
             className={`${styles.sidebarItem} ${activeWorkspace === 'main' ? styles.sidebarItemActive : ''}`}
             onClick={() => { setActiveWorkspace('main'); setShowGroupMenu(false); }}
           >
-            <span className={styles.sidebarItemIcon}>👥</span>
+            <span className={styles.sidebarItemIcon} style={{ color: 'var(--color-primary)' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </span>
             <span className={styles.sidebarItemLabel}>总控主账号 (全部)</span>
           </div>
           <div
             className={`${styles.sidebarItem} ${activeWorkspace === 'sub_1' ? styles.sidebarItemActive : ''}`}
             onClick={() => { setActiveWorkspace('sub_1'); setShowGroupMenu(false); }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=A" alt="W1" className={styles.workspaceAvatar} />
-            <span className={styles.sidebarItemLabel}>AI顾问-门店1</span>
+            <span className={styles.sidebarItemIcon} style={{ color: '#722ED1' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </span>
+            <span className={styles.sidebarItemLabel}>门店1</span>
           </div>
           <div
             className={`${styles.sidebarItem} ${activeWorkspace === 'sub_2' ? styles.sidebarItemActive : ''}`}
             onClick={() => { setActiveWorkspace('sub_2'); setShowGroupMenu(false); }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=B" alt="W2" className={styles.workspaceAvatar} />
-            <span className={styles.sidebarItemLabel}>AI顾问-门店2</span>
+            <span className={styles.sidebarItemIcon} style={{ color: '#FA8C16' }}>
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </span>
+            <span className={styles.sidebarItemLabel}>门店2</span>
           </div>
           <div
             className={`${styles.sidebarItem} ${activeWorkspace === 'sub_3' ? styles.sidebarItemActive : ''}`}
             onClick={() => { setActiveWorkspace('sub_3'); setShowGroupMenu(false); }}
           >
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=C" alt="W3" className={styles.workspaceAvatar} />
-            <span className={styles.sidebarItemLabel}>AI顾问-门店3</span>
+            <span className={styles.sidebarItemIcon} style={{ color: '#13C2C2' }}>
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </span>
+            <span className={styles.sidebarItemLabel}>门店3</span>
           </div>
         </div>
 
@@ -243,7 +256,9 @@ export default function LeadsPage() {
             ))
           ) : (
             <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>📋</span>
+              <span className={styles.emptyIcon} style={{ color: 'var(--color-text-tertiary)', marginBottom: '8px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="32" height="32"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              </span>
               <p className={styles.emptyText}>没有消息</p>
             </div>
           )}

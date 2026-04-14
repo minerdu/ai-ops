@@ -106,10 +106,10 @@ export default function SafetyFilters() {
     <div className={styles.container}>
       {/* 行业通用规则与行业业务规则 */}
       <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionIcon}>🤖</span>
+        <div className={styles.sectionHeader} style={{ padding: '16px', backgroundColor: '#FEF2F2', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center' }}>
+          <span className={styles.sectionIcon} style={{ display: 'flex', color: '#EF4444' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
           <div>
-            <h3 className={styles.sectionTitle}>1. 行业安全红线规则 (系统兜底)</h3>
+            <h3 className={styles.sectionTitle} style={{ color: '#DC2626' }}>行业安全红线规则 (系统兜底)</h3>
             <p className={styles.sectionDesc}>内置黄赌毒拦截、诱导欺诈防范、过度承诺等核心拦截规则。</p>
           </div>
         </div>
@@ -124,10 +124,10 @@ export default function SafetyFilters() {
           </div>
         </div>
 
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionIcon}>💼</span>
+        <div className={styles.sectionHeader} style={{ padding: '16px', backgroundColor: '#F0FDF4', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', marginTop: '24px' }}>
+          <span className={styles.sectionIcon} style={{ display: 'flex', color: '#10B981' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></span>
           <div>
-            <h3 className={styles.sectionTitle}>2. 行业业务规则 (最佳实践)</h3>
+            <h3 className={styles.sectionTitle} style={{ color: '#059669' }}>行业业务规则 (最佳实践)</h3>
             <p className={styles.sectionDesc}>内置行业内常见服务准则与沟通避坑指南，避免低级失误。</p>
           </div>
         </div>
@@ -145,44 +145,45 @@ export default function SafetyFilters() {
 
       {/* 企业专属部分 */}
       <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionIcon}>🏢</span>
+        <div className={styles.sectionHeader} style={{ padding: '16px', backgroundColor: '#FFFBEB', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center' }}>
+          <span className={styles.sectionIcon} style={{ display: 'flex', color: '#F59E0B' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="15" y2="22"></line><line x1="9" y1="6" x2="9.01" y2="6"></line><line x1="15" y1="6" x2="15.01" y2="6"></line><line x1="9" y1="10" x2="9.01" y2="10"></line><line x1="15" y1="10" x2="15.01" y2="10"></line><line x1="9" y1="14" x2="9.01" y2="14"></line><line x1="15" y1="14" x2="15.01" y2="14"></line></svg></span>
           <div>
-            <h3 className={styles.sectionTitle}>3. 企业专属安全红线</h3>
+            <h3 className={styles.sectionTitle} style={{ color: '#D97706' }}>企业专属安全红线</h3>
             <p className={styles.sectionDesc}>填入绝对禁止的关键词或绝对禁止的行为规范，越线即被截停。</p>
           </div>
         </div>
         <textarea className={styles.addInput} style={{ width: '100%', height: '80px', resize: 'vertical', padding: '12px' }} placeholder="绝对禁止..." defaultValue="禁止泄露合作医美机构底价" />
         
-        <div className={styles.sectionHeader} style={{ marginTop: '24px' }}>
-          <span className={styles.sectionIcon}>📄</span>
+        <div className={styles.sectionHeader} style={{ marginTop: '24px', padding: '16px', backgroundColor: '#EFF6FF', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center' }}>
+          <span className={styles.sectionIcon} style={{ display: 'flex', color: '#3B82F6' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span>
           <div>
-            <h3 className={styles.sectionTitle}>4. 企业专属业务规则</h3>
+            <h3 className={styles.sectionTitle} style={{ color: '#2563EB' }}>企业专属业务规则</h3>
             <p className={styles.sectionDesc}>填入本店特定的服务流程、客诉处理规范。</p>
           </div>
         </div>
         <textarea className={styles.addInput} style={{ width: '100%', height: '80px', resize: 'vertical', padding: '12px' }} placeholder="本店服务流程规范..." />
 
-        <div className={styles.sectionHeader} style={{ marginTop: '24px' }}>
-          <span className={styles.sectionIcon}>💰</span>
+        <div className={styles.sectionHeader} style={{ marginTop: '24px', padding: '16px', backgroundColor: '#F5F3FF', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center' }}>
+          <span className={styles.sectionIcon} style={{ display: 'flex', color: '#8B5CF6' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="14"></line><line x1="12" y1="6" x2="12" y2="10"></line></svg></span>
           <div>
-            <h3 className={styles.sectionTitle}>5. 企业专属财务规则</h3>
+            <h3 className={styles.sectionTitle} style={{ color: '#7C3AED' }}>企业专属财务规则</h3>
             <p className={styles.sectionDesc}>填入退换货政策与账款管理规范，AI将自动提取财务红线进行审批控制。</p>
           </div>
         </div>
         <textarea className={styles.addInput} style={{ width: '100%', height: '80px', resize: 'vertical', padding: '12px' }} defaultValue="所有涉及退号、退卡、结转余额的操作，必须由财务确认。严禁员工用个人账户接收客户的充值定金。" />
         
         <div className={styles.addRow} style={{ marginTop: '16px' }}>
-          <button className={styles.addBtn} style={{ background: 'var(--color-bg-section)', color: 'var(--color-primary)', border: '1px dashed var(--color-primary)', width: '100%' }}>
-            📎 上传统合企业规章制度文件 (支持 PDF / Word 一键拆解)
-          </button>
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+              上传统合企业规章制度文件 (支持 PDF / Word 一键拆解)
+            </span>
         </div>
       </div>
 
       {/* AI自主跟进选项 */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionIcon}>🎯</span>
+          <span className={styles.sectionIcon} style={{ display: 'flex', color: 'var(--color-primary)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></span>
           <div>
             <h3 className={styles.sectionTitle}>AI自主判断跟进模式</h3>
             <p className={styles.sectionDesc}>决定 AI 在缺乏明确指令时的出击意愿和跟进频率</p>
@@ -219,7 +220,7 @@ export default function SafetyFilters() {
       {/* 每日发送上限 */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionIcon}>📊</span>
+          <span className={styles.sectionIcon} style={{ display: 'flex', color: 'var(--color-primary)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></span>
           <div>
             <h3 className={styles.sectionTitle}>每日最大发送量</h3>
             <p className={styles.sectionDesc}>每天自动发送消息的总量上限，超出后新任务需人工审批</p>
