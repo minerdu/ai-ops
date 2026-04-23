@@ -49,4 +49,4 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "mkdir -p /app/data && if [ ! -f /app/data/dev.db ]; then cp /app/prisma/dev.db /app/data/dev.db; fi && npx prisma db push --skip-generate && node server.js"]
+CMD ["sh", "-c", "mkdir -p /app/data && if [ ! -f /app/data/dev.db ]; then cp /app/prisma/dev.db /app/data/dev.db; fi && node ./node_modules/prisma/build/index.js db push --skip-generate && node server.js"]
