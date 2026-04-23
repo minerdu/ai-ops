@@ -18,14 +18,15 @@ export default function SystemStatusPanel() {
   const checkStatuses = useCallback(async () => {
     // 检查 AI 模型状态
     try {
-      const aiRes = await fetch('/api/settings/ai-model');
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      const aiRes = await fetch(`${basePath}/api/settings/ai-model`);
       if (aiRes.ok) {
         const aiData = await aiRes.json();
         setStatuses(prev => ({
           ...prev,
           aiModel: {
             ...prev.aiModel,
-            status: aiData.enabled && aiData.apiKey ? 'online' : 'offline',
+            status: aiData.enabled && (aiData.apiKey || aiData.apiKeyMasked) ? 'online' : 'offline',
             detail: aiData.enabled
               ? `${aiData.provider} / ${aiData.modelName}`
               : '未启用',

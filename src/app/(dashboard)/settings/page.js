@@ -140,7 +140,8 @@ export default function SettingsPage() {
   const loadAiModelConfig = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/settings/ai-model');
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      const res = await fetch(`${basePath}/api/settings/ai-model`);
       if (res.ok) {
         const data = await res.json();
         setAiModelForm(prev => ({
@@ -201,7 +202,8 @@ export default function SettingsPage() {
       };
       if (aiModelForm.apiKey) payload.apiKey = aiModelForm.apiKey;
       if (aiModelForm.segmentModelApiKey) payload.segmentModelApiKey = aiModelForm.segmentModelApiKey;
-      const res = await fetch('/api/settings/ai-model', {
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      const res = await fetch(`${basePath}/api/settings/ai-model`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -223,8 +225,9 @@ export default function SettingsPage() {
     try {
       const payload = { provider: aiModelForm.provider, apiBaseUrl: aiModelForm.apiBaseUrl, modelName: aiModelForm.modelName, enabled: aiModelForm.enabled };
       if (aiModelForm.apiKey) payload.apiKey = aiModelForm.apiKey;
-      await fetch('/api/settings/ai-model', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const res = await fetch('/api/settings/ai-model', { method: 'POST' });
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      await fetch(`${basePath}/api/settings/ai-model`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch(`${basePath}/api/settings/ai-model`, { method: 'POST' });
       const data = await res.json();
       setTestResult(data);
       data.success ? toast.success(data.message) : toast.error(data.message);
