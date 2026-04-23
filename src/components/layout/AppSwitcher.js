@@ -4,10 +4,10 @@ import { usePathname } from 'next/navigation';
 import styles from './AppSwitcher.module.css';
 
 const APPS = [
-  { key: 'ops', code: 'OPS', label: 'AI 运营', href: '/ops', color: '#F59E0B' },
-  { key: 'fran', code: 'FRAN', label: 'AI 招商', href: '/fran', color: '#2563EB' },
-  { key: 'train', code: 'TRAIN', label: 'AI 培训', href: '/train', color: '#10B981' },
-  { key: 'growth', code: 'GROWTH', label: 'AI 引流', href: '/growth', color: '#F97316' },
+  { key: 'fran', label: 'AI招商', href: '/fran', color: '#2563EB' },
+  { key: 'ops', label: 'AI运营', href: '/ops', color: '#F59E0B' },
+  { key: 'growth', label: 'AI引流', href: '/growth', color: '#F97316' },
+  { key: 'train', label: 'AI培训', href: '/train', color: '#10B981' },
 ];
 
 function AppIcon({ appKey }) {
@@ -88,10 +88,7 @@ export default function AppSwitcher() {
                 <AppIcon appKey={app.key} />
               </span>
             </span>
-            <span className={styles.meta}>
-              <span className={styles.kicker}>{app.code}</span>
-              <span className={styles.label}>{app.label}</span>
-            </span>
+            <span className={styles.label}>{app.label}</span>
           </a>
         );
       })}
