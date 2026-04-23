@@ -6,6 +6,7 @@ import styles from './layout.module.css';
 import ChatPanel from '@/components/layout/ChatPanel';
 import CustomerDetail from '@/components/customer/CustomerDetail';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
+import AppSwitcher from '@/components/layout/AppSwitcher';
 import useStore, { selectSelectedCustomer, selectSelectedMessages } from '@/lib/store';
 
 // Import sub-pages directly for SPA rendering
@@ -59,7 +60,9 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className={styles.dashboardLayout}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+      <AppSwitcher />
+      <div className={styles.dashboardLayout} style={{ flex: 1, minHeight: 0 }}>
       {/* Extremely Thin Multi-Account Switcher Sidebar */}
       <div className={styles.accountsBar}>
         <div className={styles.accountsTop}>
@@ -262,6 +265,7 @@ export default function DashboardLayout({ children }) {
           />
         </div>
       )}
+      </div>
     </div>
   );
 }

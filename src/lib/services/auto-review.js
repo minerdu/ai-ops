@@ -179,4 +179,6 @@ export async function batchReview(taskIds) {
   return { approved, pending, results };
 }
 
-export default { reviewTask, reviewAndUpdateTask, batchReview };
+const autoReview = { reviewTask, reviewAndUpdateTask, batchReview };
+
+export default autoReview;

@@ -89,7 +89,7 @@ export default function RadarChart({ scores, size = 72, max = 10 }) {
       ctx.lineWidth = 1;
       ctx.stroke();
     }
-  }, [scores, size]);
+  }, [max, scores, size]);
 
   return (
     <canvas

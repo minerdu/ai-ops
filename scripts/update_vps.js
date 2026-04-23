@@ -9,7 +9,7 @@ const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
 
 const updateCommand = `
   set -e
-  cd /opt/ai-sales
+  cd /opt/ai-ops
   sudo git config http.postBuffer 524288000
   echo "Pulling..."
   for i in 1 2 3 4; do
@@ -18,7 +18,7 @@ const updateCommand = `
   echo "Building..."
   sudo npm install
   sudo npm run build
-  sudo systemctl restart ai-sales
+  sudo systemctl restart ai-ops
   echo "✅ VPS SUCCESSFULLY UPDATED"
 `;
 

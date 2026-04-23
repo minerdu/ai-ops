@@ -85,7 +85,20 @@ export default function CustomerCard({ customer, style, selectable, selected, on
         {/* Avatar */}
         <div className={styles.avatar} style={{ background: customer.avatar ? 'transparent' : getAvatarColor() }}>
           {customer.avatar ? (
-            <img src={customer.avatar} alt={customer.name} />
+            <span
+              aria-label={customer.name}
+              role="img"
+              style={{
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                borderRadius: 'inherit',
+                backgroundImage: `url(${customer.avatar})`,
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+              }}
+            />
           ) : (
             <span className={styles.avatarText} style={{ color: '#fff' }}>
               {avatarText}

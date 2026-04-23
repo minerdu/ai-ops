@@ -1,0 +1,16 @@
+services:
+  ai-ops:
+    container_name: ai-ops-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.production
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    volumes:
+      - ai_ops_data:/app/data
+
+volumes:
+  ai_ops_data:

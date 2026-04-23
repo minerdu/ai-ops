@@ -319,7 +319,7 @@ export default function CustomerDetail({ customerId, onClose }) {
                       <div className={styles.timelineLine}></div>
                       <div className={styles.timelineContent}>
                         <div className={styles.timelineTime}>昨天 18:20</div>
-                        <div className={styles.timelineText}>SOP命中：<b>"高转化潜客激活"</b>预案，AI助理已自动发送朋友圈唤醒话术。</div>
+                        <div className={styles.timelineText}>SOP命中：<b>&ldquo;高转化潜客激活&rdquo;</b>预案，AI助理已自动发送朋友圈唤醒话术。</div>
                       </div>
                     </div>
                   )}
@@ -351,7 +351,7 @@ export default function CustomerDetail({ customerId, onClose }) {
               </div>
               <div className={styles.aiAnalysisBox}>
                 <h4>🤖 AI 自动化评估结果被驳回</h4>
-                <p>当前记录中并未收集到足够特征（未谈及资产、未见高单价历史行为），不足以支撑进入"高净值"自动营销闭环。继续提交需要管理层特批。是否提交特批？</p>
+                <p>当前记录中并未收集到足够特征（未谈及资产、未见高单价历史行为），不足以支撑进入&ldquo;高净值&rdquo;自动营销闭环。继续提交需要管理层特批。是否提交特批？</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.cancelBtn} onClick={() => setShowTagModal(false)}>取消</button>

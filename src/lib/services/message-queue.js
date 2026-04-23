@@ -131,7 +131,7 @@ export function getAllActiveQueues() {
   return result;
 }
 
-export default {
+const messageQueue = {
   enqueue,
   cancel,
   hasQueuedMessages,
@@ -139,3 +139,5 @@ export default {
   getAllActiveQueues,
   calculateTypingDelay,
 };
+
+export default messageQueue;

@@ -17,7 +17,6 @@ export default function ReportsPage() {
   const [reportViewMode, setReportViewMode] = useState('day');
 
   useEffect(() => {
-    setIsLoading(true);
     fetch(`/api/reports/daily?date=${selectedDate}&viewMode=${reportViewMode}`)
       .then(res => res.json())
       .then(data => {
@@ -54,7 +53,10 @@ export default function ReportsPage() {
               className={styles.datePicker} 
               value={selectedDate}
               max={new Date().toISOString().split('T')[0]}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => {
+                setIsLoading(true);
+                setSelectedDate(e.target.value);
+              }}
             />
           </div>
         </div>
@@ -71,7 +73,10 @@ export default function ReportsPage() {
                 boxShadow: reportViewMode === v ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                 border: 'none', cursor: 'pointer', transition: 'all 0.2s'
               }}
-              onClick={() => setReportViewMode(v)}>
+              onClick={() => {
+                setIsLoading(true);
+                setReportViewMode(v);
+              }}>
               {v === 'day' ? '按日视图' : v === 'week' ? '按周视图' : '按月视图'}
             </button>
           ))}

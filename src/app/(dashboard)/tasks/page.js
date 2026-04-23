@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useToast } from '@/components/common/Toast';
 import { TaskCardSkeleton } from '@/components/common/Skeleton';
 import styles from './page.module.css';
@@ -27,13 +27,7 @@ export default function TasksPage() {
   const [editTime, setEditTime] = useState('');
   const [showMaterialSelector, setShowMaterialSelector] = useState(false);
 
-  useEffect(() => {
-    fetchTasks();
-    setIsBatchMode(false);
-    setSelectedTaskIds(new Set());
-  }, [activeTab]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/tasks`);
@@ -45,7 +39,13 @@ export default function TasksPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void fetchTasks();
+    setIsBatchMode(false);
+    setSelectedTaskIds(new Set());
+  }, [activeTab, fetchTasks]);
 
   const syncTaskUpdate = async (id, action, updateData = null) => {
     try {
@@ -216,6 +216,44 @@ export default function TasksPage() {
 
       {/* Task List */}
       <div className={styles.taskList}>
+        {isBatchMode && activeTab === 'pending' && filteredTasks.length > 0 && (
+          <div
+            className={styles.selectAllBar}
+            onClick={() => {
+              const allIds = filteredTasks.map(t => t.id);
+              const allSelected = allIds.every(id => selectedTaskIds.has(id));
+              if (allSelected) {
+                setSelectedTaskIds(new Set());
+              } else {
+                setSelectedTaskIds(new Set(allIds));
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '10px 16px',
+              background: 'var(--color-bg-card)',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              border: '1px solid var(--color-border)',
+              marginBottom: '4px',
+              userSelect: 'none',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-bg-page)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--color-bg-card)'}
+          >
+            <input
+              type="checkbox"
+              checked={filteredTasks.length > 0 && filteredTasks.every(t => selectedTaskIds.has(t.id))}
+              readOnly
+              style={{ marginRight: '12px', transform: 'scale(1.2)', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+              全选（共 {filteredTasks.length} 项待审批）
+            </span>
+          </div>
+        )}
         {isLoading ? (
             <>
               <TaskCardSkeleton />

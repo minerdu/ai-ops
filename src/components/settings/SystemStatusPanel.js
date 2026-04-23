@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styles from './SystemStatusPanel.module.css';
 
 /**
@@ -15,11 +15,7 @@ export default function SystemStatusPanel() {
     account: { status: 'checking', label: '账号模式', detail: '' },
   });
 
-  useEffect(() => {
-    checkStatuses();
-  }, []);
-
-  const checkStatuses = async () => {
+  const checkStatuses = useCallback(async () => {
     // 检查 AI 模型状态
     try {
       const aiRes = await fetch('/api/settings/ai-model');
@@ -67,7 +63,15 @@ export default function SystemStatusPanel() {
         detail: '模拟模式',
       },
     }));
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void checkStatuses();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [checkStatuses]);
 
   const getStatusIcon = (status) => {
     switch (status) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/common/Toast';
 import styles from './SafetyFilters.module.css';
 
@@ -22,11 +22,7 @@ export default function SafetyFilters() {
 
   const [aiBehavior, setAiBehavior] = useState('normal');
 
-  useEffect(() => {
-    loadRules();
-  }, []);
-
-  const loadRules = async () => {
+  const loadRules = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/safety-rules');
@@ -42,7 +38,11 @@ export default function SafetyFilters() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadRules();
+  }, [loadRules]);
 
   const addRule = async (ruleType, value) => {
     if (!value.trim()) return;

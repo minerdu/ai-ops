@@ -57,18 +57,18 @@ sudo systemctl daemon-reload
 sudo systemctl enable hysteria
 sudo systemctl restart hysteria
 
-# 4. Modify ai-sales systemd service to use proxy conditionally
-echo "Modifying AI-Sales Service for Proxy..."
-sudo tee /etc/systemd/system/ai-sales.service > /dev/null << 'EOF'
+# 4. Modify ai-ops systemd service to use proxy conditionally
+echo "Modifying AI-Ops Service for Proxy..."
+sudo tee /etc/systemd/system/ai-ops.service > /dev/null << 'EOF'
 [Unit]
-Description=AI Sales Platform
+Description=AI Ops Platform
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/ai-sales
-ExecStart=/usr/bin/node /opt/ai-sales/node_modules/.bin/next start -p 3000
+WorkingDirectory=/opt/ai-ops
+ExecStart=/usr/bin/node /opt/ai-ops/node_modules/.bin/next start -p 3000
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
@@ -81,9 +81,9 @@ Environment="NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,192.168.0.0/16,172.16.0.0/1
 WantedBy=multi-user.target
 EOF
 
-# 5. Restart ai-sales
+# 5. Restart ai-ops
 sudo systemctl daemon-reload
-sudo systemctl restart ai-sales
+sudo systemctl restart ai-ops
 
 echo "✅ HYSTERIA PROXY CONFIGURED AND NEXT.JS APP RESTARTED"
 # Test the proxy

@@ -6,11 +6,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # ==========================================
 # OPENAPI 转发生服务 (纯代理版)
-# 作用: 替代原有的复杂 Bridge, 纯粹接收企微 webhook 并抛给 AI-Sales 云端
+# 作用: 替代原有的复杂 Bridge, 纯粹接收企微 webhook 并抛给 AI-Ops 云端
 # ==========================================
 
-# 在这里配置你们的 AI-Sales 服务器地址
-TARGET_WEBHOOK_URL = os.environ.get("TARGET_WEBHOOK_URL", "http://101.33.199.203/api/wecom/callback")
+# 在这里配置你们的 AI-Ops 服务器地址
+TARGET_WEBHOOK_URL = os.environ.get("TARGET_WEBHOOK_URL", "http://101.33.199.203/ops/api/wecom/webhook")
 LISTEN_PORT = 19081
 
 class WecomRelay(BaseHTTPRequestHandler):
@@ -50,7 +50,7 @@ class WecomRelay(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     print("=============================================")
-    print("  WeCom Webhook Relay to AI-Sales is running ")
+    print("  WeCom Webhook Relay to AI-Ops is running ")
     print(f"  Target: {TARGET_WEBHOOK_URL}")
     print(f"  Listening on port: {LISTEN_PORT}")
     print("  (Please ensure your Hermes reverse proxy routes /oa/in to 19081)")

@@ -110,4 +110,6 @@ export function getCronWorkerStatus() {
   };
 }
 
-export default { startCronWorker, stopCronWorker, getCronWorkerStatus };
+const cronWorker = { startCronWorker, stopCronWorker, getCronWorkerStatus };
+
+export default cronWorker;

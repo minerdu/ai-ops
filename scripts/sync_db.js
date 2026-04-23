@@ -22,7 +22,7 @@ conn.on('ready', () => {
       console.log('[sftp] dev.db successfully uploaded to home dir!');
       
       // Move to correct location and restart service
-      conn.exec('sudo mv /home/ubuntu/dev.db /opt/ai-sales/prisma/dev.db && sudo chown root:root /opt/ai-sales/prisma/dev.db && sudo systemctl restart ai-sales', (err, stream) => {
+      conn.exec('sudo mv /home/ubuntu/dev.db /opt/ai-ops/prisma/dev.db && sudo chown root:root /opt/ai-ops/prisma/dev.db && sudo systemctl restart ai-ops', (err, stream) => {
         if (err) throw err;
         stream.on('close', (code, signal) => {
           console.log('[ssh2] Service restarted. Disconnected.');

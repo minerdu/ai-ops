@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/common/Toast';
 import styles from './page.module.css';
 
@@ -10,11 +10,7 @@ export default function SOPPage() {
   const [editingTemplate, setEditingTemplate] = useState(null);
   const toast = useToast();
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/sop');
@@ -40,7 +36,11 @@ export default function SOPPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void fetchTemplates();
+  }, [fetchTemplates]);
 
   const toggleSop = async (id) => {
     const template = templates.find(t => t.id === id);

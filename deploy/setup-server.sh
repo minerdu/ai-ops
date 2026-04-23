@@ -1,12 +1,12 @@
 #!/bin/bash
 # ============================================
-# AI-Sales 一键服务器部署脚本
+# AI-Ops 一键服务器部署脚本
 # 在 VPS 上以 root 执行即可
 # ============================================
 set -e
 
 echo "=========================================="
-echo "  AI-Sales VPS 部署脚本"
+echo "  AI-Ops VPS 部署脚本"
 echo "=========================================="
 
 # 1. 安装 Node.js 20 LTS
@@ -24,7 +24,7 @@ apt-get install -y git nginx certbot python3-certbot-nginx ufw
 
 # 3. 克隆项目
 echo "[3/7] 克隆项目..."
-PROJECT_DIR="/opt/ai-sales"
+PROJECT_DIR="/opt/ai-ops"
 if [ -d "$PROJECT_DIR" ]; then
   echo "项目目录已存在，拉取最新代码..."
   cd "$PROJECT_DIR"
@@ -52,16 +52,16 @@ npm run build
 
 # 5. 创建 systemd 服务
 echo "[5/7] 配置 systemd 服务..."
-cat > /etc/systemd/system/ai-sales.service << 'SERVICEEOF'
+cat > /etc/systemd/system/ai-ops.service << 'SERVICEEOF'
 [Unit]
-Description=AI Sales Platform
+Description=AI Ops Platform
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/ai-sales
-ExecStart=/usr/bin/node /opt/ai-sales/node_modules/.bin/next start -p 3000
+WorkingDirectory=/opt/ai-ops
+ExecStart=/usr/bin/node /opt/ai-ops/node_modules/.bin/next start -p 3000
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
@@ -72,12 +72,12 @@ WantedBy=multi-user.target
 SERVICEEOF
 
 systemctl daemon-reload
-systemctl enable ai-sales
-systemctl restart ai-sales
+systemctl enable ai-ops
+systemctl restart ai-ops
 
 # 6. 配置 Nginx 反向代理
 echo "[6/7] 配置 Nginx..."
-cat > /etc/nginx/sites-available/ai-sales << 'NGINXEOF'
+cat > /etc/nginx/sites-available/ai-ops << 'NGINXEOF'
 server {
     listen 80;
     server_name _;
@@ -87,7 +87,11 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
 
     # WebSocket 支持
-    location / {
+    location = / {
+        return 302 /ops/;
+    }
+
+    location /ops/ {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -105,7 +109,7 @@ server {
     }
 
     # API webhook 专用（更长超时，AI 处理需要时间）
-    location /api/wecom/ {
+    location /ops/api/wecom/ {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -118,7 +122,7 @@ server {
 }
 NGINXEOF
 
-ln -sf /etc/nginx/sites-available/ai-sales /etc/nginx/sites-enabled/ai-sales
+ln -sf /etc/nginx/sites-available/ai-ops /etc/nginx/sites-enabled/ai-ops
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl restart nginx
 
@@ -139,12 +143,12 @@ echo "=========================================="
 echo "  ✅ 部署完成!"
 echo "=========================================="
 echo ""
-echo "  访问地址: http://101.33.199.203"
-echo "  API 地址: http://101.33.199.203/api"
-echo "  Webhook:  http://101.33.199.203/api/wecom/webhook"
+echo "  访问地址: http://101.33.199.203/ops/"
+echo "  API 地址: http://101.33.199.203/ops/api"
+echo "  Webhook:  http://101.33.199.203/ops/api/wecom/webhook"
 echo ""
 echo "  管理命令:"
-echo "    查看状态: systemctl status ai-sales"
-echo "    查看日志: journalctl -u ai-sales -f"
-echo "    重启服务: systemctl restart ai-sales"
+echo "    查看状态: systemctl status ai-ops"
+echo "    查看日志: journalctl -u ai-ops -f"
+echo "    重启服务: systemctl restart ai-ops"
 echo ""
