@@ -12,25 +12,26 @@ const APPS = [
 
 export default function AppSwitcher() {
   const pathname = usePathname();
-  const currentApp = pathname.split('/')[1] || 'fran';
+  const currentSegment = pathname.split('/').filter(Boolean)[0];
+  const configuredApp = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\//g, '');
+  const currentApp = APPS.some((app) => app.key === currentSegment)
+    ? currentSegment
+    : (APPS.some((app) => app.key === configuredApp) ? configuredApp : 'fran');
 
   return (
     <div className={styles.bar}>
       {APPS.map((app) => {
         const isActive = currentApp === app.key;
-        const isComingSoon = app.key === 'train' || app.key === 'growth';
         return (
           <a
             key={app.key}
             href={app.href}
-            className={`${styles.item} ${isActive ? styles.active : ''} ${isComingSoon ? styles.disabled : ''}`}
+            className={`${styles.item} ${isActive ? styles.active : ''}`}
             style={{ '--app-color': app.color }}
-            onClick={isComingSoon ? (e) => e.preventDefault() : undefined}
-            title={isComingSoon ? '即将上线' : app.label}
+            title={app.label}
           >
             <span className={styles.icon}>{app.icon}</span>
             <span className={styles.label}>{app.label}</span>
-            {isComingSoon && <span className={styles.badge}>Soon</span>}
           </a>
         );
       })}
