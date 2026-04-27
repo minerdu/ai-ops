@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { syncAllCustomers } from '@/lib/youzanService';
+import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 // 简单的同步锁，防止重复触发
 let isSyncing = false;

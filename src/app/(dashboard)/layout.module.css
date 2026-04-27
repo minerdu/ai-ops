@@ -147,14 +147,15 @@
 
 /* Left Panel - 功能区 */
 .leftPanel {
-  flex: 1;
-  width: 50%;
-  max-width: 50%;
+  flex: 2;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--color-border-light);
   background: var(--color-bg-card);
   overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
 .leftPanelContent {
@@ -165,23 +166,94 @@
 
 /* Right Panel - AI对话区 */
 .rightPanel {
-  flex: 1;
-  width: 50%;
-  max-width: 50%;
+  flex: 2;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: var(--color-bg-card);
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.rightTopBar {
+  height: 60px;
+  min-height: 60px;
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+}
+
+.rightTopBarCustomer {
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
+}
+
+.rightTopBarTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.rightTopBarSub {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
 }
 
 /* Rightmost Panel - 详情侧边栏 */
 .detailPanelWrapper {
-  width: 320px;
-  min-width: 320px;
+  flex: 1;
+  min-width: 0;
   flex-shrink: 0;
   border-left: 1px solid var(--color-border-light);
   background: var(--color-bg-card);
   animation: slideInRight 0.3s ease forwards;
+}
+
+.desktopTabRail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border-bottom: 1px solid var(--color-border-light);
+  overflow-x: auto;
+}
+
+.desktopTabItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.desktopTabItemActive {
+  color: var(--color-primary);
+  border-color: rgba(37, 99, 235, 0.18);
+  background: #eff6ff;
+}
+
+.desktopTabDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.desktopTabText {
+  line-height: 1;
 }
 
 /* Top Bar */
@@ -301,6 +373,16 @@
 .backBtnText {
   margin-left: -4px; /* Pull text closer to the chevron */
   font-weight: 500;
+}
+
+.backBtnMobileOnly {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .backBtnMobileOnly {
+    display: inline-flex;
+  }
 }
 
 /* Right Panel Top Bar */
@@ -447,7 +529,7 @@
   margin: var(--space-2) var(--space-4);
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation - Persistent across mobile/desktop */
 .bottomNav {
   display: flex;
   align-items: center;
@@ -455,8 +537,22 @@
   height: var(--bottombar-height);
   background: var(--color-bg-card);
   border-top: 1px solid var(--color-border-light);
-  flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  flex-shrink: 0;
+}
+
+.panelBottomNav {
+  display: flex;
+}
+
+.mobileBottomNav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottomNav {
+    left: 0;
+  }
 }
 
 .navItem {
@@ -533,6 +629,18 @@
 
 /* Tablet & smaller desktops: detail panel as overlay */
 @media (max-width: 1400px) {
+  .leftPanel {
+    flex: 1;
+    width: 50%;
+    max-width: 50%;
+  }
+
+  .rightPanel {
+    flex: 1;
+    width: 50%;
+    max-width: 50%;
+  }
+
   .detailPanelWrapper {
     position: fixed;
     right: 0;
@@ -558,6 +666,10 @@
     display: none;
   }
 
+  .desktopTabRail {
+    display: none;
+  }
+
   .mainContent {
     position: relative;
   }
@@ -567,6 +679,7 @@
     width: 100%;
     max-width: 100%;
     flex: 1;
+    padding-bottom: calc(var(--bottombar-height) + env(safe-area-inset-bottom, 0));
   }
 
   /* Right panel hidden by default on mobile */
@@ -574,6 +687,7 @@
     display: none;
     width: 100%;
     max-width: 100%;
+    padding-bottom: calc(var(--bottombar-height) + env(safe-area-inset-bottom, 0));
   }
 
   /* When customer is selected: hide left, show right */
@@ -584,6 +698,24 @@
   .rightPanelVisibleMobile {
     display: flex;
     flex: 1;
+  }
+
+  .rightTopBarMobileHidden {
+    display: none;
+  }
+
+  .panelBottomNav {
+    display: none;
+  }
+
+  .mobileBottomNav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 320;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
   }
 
   /* Detail panel full screen on mobile */
@@ -602,34 +734,6 @@
     inset: 0;
     background: rgba(0,0,0,0.3);
     z-index: 499;
-  }
-
-  /* Bottom nav: fixed at the very bottom of the screen */
-  .bottomNav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 400;
-  }
-
-  /* Content area needs padding to not hide behind fixed bottom nav */
-  .leftPanelContent {
-    padding-bottom: var(--bottombar-height);
-  }
-
-  /* Mobile Command Center Overlay — sits above left panel, below bottom nav */
-  .mobileCommandOverlay {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: var(--bottombar-height);
-    z-index: 390;
-    background: var(--color-bg-card);
-    animation: slideInRight 0.25s ease forwards;
   }
 }
 

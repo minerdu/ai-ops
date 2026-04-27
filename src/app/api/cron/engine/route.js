@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { sendWeComMessage } from '@/lib/services/wecom-adapter';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
+import { generateJourneyTasks } from '@/lib/services/journey-engine';
 
 /**
  * 定时执行引擎（增强版）
@@ -103,6 +102,7 @@ async function precheckTask(task, config) {
 export async function GET(request) {
   try {
     // SECURITY: In production, add Secret Bearer Token check
+    const journeyScan = await generateJourneyTasks();
     
     // 1. Query for tasks that are ready to execute
     const now = new Date();
@@ -120,7 +120,11 @@ export async function GET(request) {
     });
 
     if (tasksToExecute.length === 0) {
-      return NextResponse.json({ status: 'idle', count: 0 });
+      return NextResponse.json({
+        status: 'idle',
+        count: 0,
+        journeyScan,
+      });
     }
 
     const config = await loadAiConfig();
@@ -284,6 +288,7 @@ export async function GET(request) {
       executed: executedIds.length,
       failed: failedIds.length,
       skipped: skippedIds.length,
+      journeyScan,
       logs: { executedIds, failedIds, skippedIds }
     });
 

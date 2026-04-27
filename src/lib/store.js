@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { apiFetch } from '@/lib/basePath';
 
 const useStore = create((set, get) => ({
   // --- Customer State ---
@@ -22,7 +23,7 @@ const useStore = create((set, get) => ({
       if (activeFilter !== 'all') url += `filter=${activeFilter}&`;
       if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}`;
       
-      const res = await fetch(url);
+      const res = await apiFetch(url, { cache: 'no-store' });
       const data = await res.json();
       set({ customers: data, isLoadingCustomers: false });
     } catch (e) {
@@ -34,7 +35,7 @@ const useStore = create((set, get) => ({
   fetchMessages: async (customerId) => {
     set({ isLoadingMessages: true });
     try {
-      const res = await fetch(`/api/messages?customerId=${customerId}`);
+      const res = await apiFetch(`/api/messages?customerId=${customerId}`, { cache: 'no-store' });
       const data = await res.json();
       
       set((state) => ({
@@ -52,7 +53,7 @@ const useStore = create((set, get) => ({
 
   sendMessage: async (customerId, content, senderType = 'human') => {
     try {
-      const res = await fetch('/api/messages', {
+      const res = await apiFetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId, content, senderType })
@@ -120,7 +121,7 @@ const useStore = create((set, get) => ({
   notifications: [],
   fetchNotifications: async () => {
     try {
-      const res = await fetch('/api/notifications');
+      const res = await apiFetch('/api/notifications', { cache: 'no-store' });
       const data = await res.json();
       set({ notifications: data });
     } catch (e) {

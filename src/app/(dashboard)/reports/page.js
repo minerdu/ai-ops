@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import useStore from '@/lib/store';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Legend } from 'recharts';
 import styles from './page.module.css';
+import { apiFetch } from '@/lib/basePath';
+
+function formatRate(rate) {
+  if (!Number.isFinite(rate) || rate <= 0) return '0%';
+  if (rate >= 100) return '100%';
+  return `${rate}%`;
+}
 
 export default function ReportsPage() {
   const [reportData, setReportData] = useState(null);
@@ -17,7 +24,7 @@ export default function ReportsPage() {
   const [reportViewMode, setReportViewMode] = useState('day');
 
   useEffect(() => {
-    fetch(`/api/reports/daily?date=${selectedDate}&viewMode=${reportViewMode}`)
+    apiFetch(`/api/reports/daily?date=${selectedDate}&viewMode=${reportViewMode}`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setReportData(data);
@@ -109,8 +116,8 @@ export default function ReportsPage() {
               <span className={styles.statLabel}>AI回复</span>
             </div>
             <div className={styles.statBox}>
-              <span className={styles.statNum}>{r.avgResponseTime}秒</span>
-              <span className={styles.statLabel}>平均响应</span>
+              <span className={styles.statNum}>{formatRate(r.responseWithin60Rate)}</span>
+              <span className={styles.statLabel}>60秒内响应率</span>
             </div>
           </div>
         </div>

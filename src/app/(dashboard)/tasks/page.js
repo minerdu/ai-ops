@@ -5,6 +5,7 @@ import { useToast } from '@/components/common/Toast';
 import { TaskCardSkeleton } from '@/components/common/Skeleton';
 import styles from './page.module.css';
 import MaterialSelector from '@/components/common/MaterialSelector';
+import { apiFetch } from '@/lib/basePath';
 
 const tabs = [
   { key: 'pending', label: '待审批' },
@@ -16,6 +17,7 @@ const tabs = [
 export default function TasksPage() {
   const [activeTab, setActiveTab] = useState('pending');
   const [tasks, setTasks] = useState([]);
+  const [stats, setStats] = useState({ pending: 0, toExecute: 0, completed: 0, rejected: 0, rejectRate: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
   
@@ -30,16 +32,17 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/tasks`);
+      const res = await apiFetch(`/api/tasks?tab=${activeTab}&includeStats=1&limit=200`, { cache: 'no-store' });
       const data = await res.json();
-      setTasks(Array.isArray(data) ? data : []);
+      setTasks(Array.isArray(data?.tasks) ? data.tasks : []);
+      setStats(data?.stats || { pending: 0, toExecute: 0, completed: 0, rejected: 0, rejectRate: 0 });
     } catch (e) {
       console.error('Failed to fetch tasks:', e);
       toast.error('加载任务失败');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [activeTab, toast]);
 
   useEffect(() => {
     void fetchTasks();
@@ -47,15 +50,17 @@ export default function TasksPage() {
     setSelectedTaskIds(new Set());
   }, [activeTab, fetchTasks]);
 
-  const syncTaskUpdate = async (id, action, updateData = null) => {
+  const syncTaskUpdate = async (id, action, updateData = null, shouldRefresh = true) => {
     try {
-      const res = await fetch('/api/tasks', {
+      const res = await apiFetch('/api/tasks', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, action, updateData })
       });
       if (res.ok) {
-        fetchTasks();
+        if (shouldRefresh) {
+          void fetchTasks();
+        }
         return true;
       }
       return false;
@@ -66,31 +71,7 @@ export default function TasksPage() {
     }
   };
 
-  const stats = useMemo(() => {
-    const manualTasks = tasks.filter(t => t.triggerSource === 'manual_command');
-    return {
-      pending: tasks.filter(t => t.approvalStatus === 'pending').length,
-      toExecute: tasks.filter(t => t.approvalStatus === 'approved' && t.executeStatus === 'scheduled').length,
-      completed: tasks.filter(t => t.executeStatus === 'success').length,
-      rejected: tasks.filter(t => t.approvalStatus === 'rejected').length,
-      rejectRate: manualTasks.length > 0 ? Math.round(manualTasks.filter(t => t.approvalStatus === 'rejected').length / manualTasks.length * 100) : 0,
-    };
-  }, [tasks]);
-
-  const filteredTasks = useMemo(() => {
-    switch (activeTab) {
-      case 'pending':
-        return tasks.filter(t => t.approvalStatus === 'pending');
-      case 'approved':
-        return tasks.filter(t => t.approvalStatus === 'approved' && t.executeStatus !== 'success');
-      case 'executed':
-        return tasks.filter(t => t.executeStatus === 'success');
-      case 'rejected':
-        return tasks.filter(t => t.approvalStatus === 'rejected');
-      default:
-        return tasks;
-    }
-  }, [activeTab, tasks]);
+  const filteredTasks = useMemo(() => tasks, [tasks]);
 
   const handleApprove = async (taskId) => {
     const ok = await syncTaskUpdate(taskId, 'approve');
@@ -143,8 +124,8 @@ export default function TasksPage() {
   const handleBatchApprove = async () => {
     if (selectedTaskIds.size === 0) return;
     if (confirm(`确认批量通过 ${selectedTaskIds.size} 个工单？`)) {
-        const promises = Array.from(selectedTaskIds).map(id => syncTaskUpdate(id, 'approve'));
-        await Promise.all(promises);
+        await Promise.all(Array.from(selectedTaskIds).map(id => syncTaskUpdate(id, 'approve', null, false)));
+        await fetchTasks();
         toast.success(`已批量通过 ${selectedTaskIds.size} 个任务`);
         setIsBatchMode(false);
         setSelectedTaskIds(new Set());

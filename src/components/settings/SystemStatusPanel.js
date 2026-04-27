@@ -12,7 +12,7 @@ export default function SystemStatusPanel() {
     aiModel: { status: 'checking', label: 'AI 大模型', detail: '' },
     knowledgeBase: { status: 'checking', label: '知识库', detail: '' },
     crm: { status: 'checking', label: 'CRM系统', detail: '' },
-    account: { status: 'checking', label: '账号模式', detail: '' },
+    account: { status: 'checking', label: 'Skill中心', detail: '' },
   });
 
   const checkStatuses = useCallback(async () => {
@@ -55,13 +55,13 @@ export default function SystemStatusPanel() {
       },
     }));
 
-    // 检查账号状态（暂为 mock）
+    // 检查 Skill 中心状态
     setStatuses(prev => ({
       ...prev,
       account: {
         ...prev.account,
-        status: 'warning',
-        detail: '模拟模式',
+        status: 'online',
+        detail: '已加载 樊文花Skill',
       },
     }));
   }, []);

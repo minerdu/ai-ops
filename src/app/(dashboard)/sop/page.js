@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/common/Toast';
 import styles from './page.module.css';
+import { apiFetch } from '@/lib/basePath';
 
 export default function SOPPage() {
   const [templates, setTemplates] = useState([]);
@@ -13,7 +14,7 @@ export default function SOPPage() {
   const fetchTemplates = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/sop');
+      const res = await apiFetch('/api/sop', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         // Transform API data to match component format
@@ -51,7 +52,7 @@ export default function SOPPage() {
     setTemplates(templates.map(t => t.id === id ? { ...t, isActive: newActive } : t));
 
     try {
-      const res = await fetch('/api/sop', {
+      const res = await apiFetch('/api/sop', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, isActive: newActive })

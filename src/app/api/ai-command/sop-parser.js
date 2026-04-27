@@ -5,10 +5,8 @@
  * 支持相对时间 (day_offset) 和绝对时间 (cron 表达式/固定时间)。
  */
 
-import { PrismaClient } from '@prisma/client';
 import { reviewAndUpdateTask } from '@/lib/services/auto-review';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 /**
  * 将 SOP 时间表解析并创建 Task

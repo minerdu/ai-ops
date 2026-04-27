@@ -1,7 +1,5 @@
 import { handleIncomingMessage } from '@/lib/services/ai-service';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 // Optional: Security token matching
 const EXPECTED_AUTH = process.env.OPENAPI_BRIDGE_AUTH || '';

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './page.module.css';
+import { apiFetch } from '@/lib/basePath';
 
 const tabs = ['全部', '朋友圈', '文本', '图片', '视频', '链接', '文件'];
 
@@ -38,7 +39,7 @@ export default function MaterialsPage() {
 
   const fetchMaterials = async () => {
     try {
-      const res = await fetch('/api/materials');
+      const res = await apiFetch('/api/materials', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setMaterials(data);

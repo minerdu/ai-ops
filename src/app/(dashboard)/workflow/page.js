@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import styles from './page.module.css';
+import { apiFetch } from '@/lib/basePath';
 
 const DAYS_OF_WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -48,20 +49,54 @@ function getMonthDays(year, month) {
   return days;
 }
 
+function getRangeAnchorDate(baseDate, viewMode) {
+  if (viewMode === 'month') {
+    return new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  }
+
+  const anchor = new Date(baseDate);
+  anchor.setHours(0, 0, 0, 0);
+  anchor.setDate(anchor.getDate() - anchor.getDay());
+  return anchor;
+}
+
+function formatDateParam(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export default function WorkflowPage() {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('day'); // day, week, month
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const rangeAnchorDate = useMemo(() => getRangeAnchorDate(selectedDate, viewMode), [selectedDate, viewMode]);
+  const rangeDateParam = useMemo(() => formatDateParam(rangeAnchorDate), [rangeAnchorDate]);
 
   useEffect(() => {
-    fetch('/api/tasks')
-      .then(res => res.json())
-      .then(data => setTasks(Array.isArray(data) ? data : []))
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, []);
+    const loadTasks = async () => {
+      setIsLoading(true);
+      try {
+        const query = new URLSearchParams({
+          viewMode,
+          date: rangeDateParam,
+          limit: viewMode === 'month' ? '400' : '180',
+        });
+        const res = await apiFetch(`/api/tasks?${query.toString()}`, { cache: 'no-store' });
+        const data = await res.json();
+        setTasks(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadTasks();
+  }, [rangeDateParam, viewMode]);
 
   const weekDays = useMemo(() => getWeekDays(selectedDate), [selectedDate]);
   const monthDays = useMemo(() => getMonthDays(selectedDate.getFullYear(), selectedDate.getMonth()), [selectedDate]);
@@ -70,8 +105,9 @@ export default function WorkflowPage() {
   const taskCountByDate = useMemo(() => {
     const map = {};
     tasks.forEach(t => {
-      if (!t.scheduledAt) return;
-      const d = new Date(t.scheduledAt);
+      const taskDate = t.scheduledAt || t.createdAt;
+      if (!taskDate) return;
+      const d = new Date(taskDate);
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
       map[key] = (map[key] || 0) + 1;
     });
@@ -86,11 +122,14 @@ export default function WorkflowPage() {
   // Tasks for selected date
   const selectedTasks = useMemo(() => {
     return tasks.filter(t => {
-      if (!t.scheduledAt) return false;
-      return isSameDay(new Date(t.scheduledAt), selectedDate);
+      const taskDate = t.scheduledAt || t.createdAt;
+      if (!taskDate) return false;
+      return isSameDay(new Date(taskDate), selectedDate);
     }).map(t => ({
       id: t.id,
-      time: new Date(t.scheduledAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+      time: t.scheduledAt
+        ? new Date(t.scheduledAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        : '待排期',
       icon: t.triggerSource === 'journey' ? '🤖' : t.triggerSource === 'manual_command' ? '📋' : t.taskType === 'image' ? '🖼️' : '📝',
       target: t.customerName || '未知用户',
       description: t.title,
@@ -109,7 +148,10 @@ export default function WorkflowPage() {
   const weekTasks = useMemo(() => {
     return weekDays.map(date => ({
       date,
-      tasks: tasks.filter(t => t.scheduledAt && isSameDay(new Date(t.scheduledAt), date))
+      tasks: tasks.filter(t => {
+        const taskDate = t.scheduledAt || t.createdAt;
+        return taskDate && isSameDay(new Date(taskDate), date);
+      })
     }));
   }, [tasks, weekDays]);
 
@@ -248,7 +290,9 @@ export default function WorkflowPage() {
                 ) : dayTasks.map(t => (
                   <div key={t.id} className={styles.weekTaskChip}>
                     <span className={styles.weekTaskTime}>
-                      {new Date(t.scheduledAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                      {t.scheduledAt
+                        ? new Date(t.scheduledAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+                        : '待排期'}
                     </span>
                     <span className={styles.weekTaskTitle}>{t.title}</span>
                   </div>

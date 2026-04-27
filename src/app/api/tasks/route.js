@@ -1,10 +1,140 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getJourneySummary } from '@/lib/services/journey-engine';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+function serializeTask(task) {
+  return {
+    id: task.id,
+    customerId: task.customerId,
+    customerName: task.customer?.name || '未知客户',
+    title: task.title,
+    content: task.content,
+    triggerSource: task.triggerSource,
+    triggerReason: task.triggerReason || '',
+    taskType: task.taskType,
+    approvalStatus: task.approvalStatus,
+    executeStatus: task.executeStatus,
+    scheduledAt: task.scheduledAt?.toISOString() || null,
+    executedAt: task.executedAt?.toISOString() || null,
+    rejectReason: task.rejectReason || null,
+    createdAt: task.createdAt.toISOString(),
+  };
+}
+
+function getRangeWindow(dateParam, viewMode) {
+  const baseDate = dateParam ? new Date(dateParam) : new Date();
+  if (Number.isNaN(baseDate.getTime())) {
+    return null;
+  }
+
+  if (viewMode === 'month') {
+    const start = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+    start.setDate(start.getDate() - start.getDay());
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
+    end.setDate(end.getDate() + (6 - end.getDay()));
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  const day = new Date(baseDate);
+  day.setHours(0, 0, 0, 0);
+  const start = new Date(day);
+  start.setDate(day.getDate() - day.getDay());
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
+function getTabWhere(tab) {
+  switch (tab) {
+    case 'pending':
+      return { approvalStatus: 'pending' };
+    case 'approved':
+      return { approvalStatus: 'approved', executeStatus: { not: 'success' } };
+    case 'executed':
+      return { executeStatus: 'success' };
+    case 'rejected':
+      return { approvalStatus: 'rejected' };
+    default:
+      return null;
+  }
+}
+
+function getTakeValue(rawValue) {
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return undefined;
+  }
+  return Math.min(parsed, 500);
+}
 
 export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const summary = searchParams.get('summary');
+    if (summary === 'journey') {
+      const data = await getJourneySummary();
+      return NextResponse.json(data);
+    }
+
+    const tab = searchParams.get('tab');
+    const includeStats = searchParams.get('includeStats') === '1';
+    const viewMode = searchParams.get('viewMode');
+    const date = searchParams.get('date');
+    const triggerSource = searchParams.get('triggerSource');
+    const customerId = searchParams.get('customerId');
+    const take = getTakeValue(searchParams.get('limit'));
+
+    const filters = [];
+    if (tab) {
+      const tabWhere = getTabWhere(tab);
+      if (tabWhere) {
+        filters.push(tabWhere);
+      }
+    }
+    if (triggerSource) {
+      filters.push({ triggerSource });
+    }
+    if (customerId) {
+      filters.push({ customerId });
+    }
+    if (viewMode) {
+      const range = getRangeWindow(date, viewMode);
+      if (range) {
+        filters.push({
+          OR: [
+            {
+              scheduledAt: {
+                gte: range.start,
+                lte: range.end,
+              },
+            },
+            {
+              scheduledAt: null,
+              createdAt: {
+                gte: range.start,
+                lte: range.end,
+              },
+            },
+          ],
+        });
+      }
+    }
+
+    const where = filters.length > 0 ? { AND: filters } : undefined;
+
     const tasks = await prisma.task.findMany({
-      orderBy: { createdAt: 'desc' },
+      where,
+      orderBy: [
+        { scheduledAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take,
       include: {
         customer: {
           select: { name: true }
@@ -12,22 +142,29 @@ export async function GET(request) {
       }
     });
 
-    const formattedTasks = tasks.map(t => ({
-      id: t.id,
-      customerId: t.customerId,
-      customerName: t.customer?.name || '未知客户',
-      title: t.title,
-      content: t.content,
-      triggerSource: t.triggerSource,
-      triggerReason: t.triggerReason || '',
-      taskType: t.taskType,
-      approvalStatus: t.approvalStatus,
-      executeStatus: t.executeStatus,
-      scheduledAt: t.scheduledAt?.toISOString() || null,
-      executedAt: t.executedAt?.toISOString() || null,
-      rejectReason: t.rejectReason || null,
-      createdAt: t.createdAt.toISOString()
-    }));
+    const formattedTasks = tasks.map(serializeTask);
+
+    if (includeStats) {
+      const [pending, toExecute, completed, rejected, manualTotal, manualRejected] = await Promise.all([
+        prisma.task.count({ where: { approvalStatus: 'pending' } }),
+        prisma.task.count({ where: { approvalStatus: 'approved', executeStatus: 'scheduled' } }),
+        prisma.task.count({ where: { executeStatus: 'success' } }),
+        prisma.task.count({ where: { approvalStatus: 'rejected' } }),
+        prisma.task.count({ where: { triggerSource: 'manual_command' } }),
+        prisma.task.count({ where: { triggerSource: 'manual_command', approvalStatus: 'rejected' } }),
+      ]);
+
+      return NextResponse.json({
+        tasks: formattedTasks,
+        stats: {
+          pending,
+          toExecute,
+          completed,
+          rejected,
+          rejectRate: manualTotal > 0 ? Math.round((manualRejected / manualTotal) * 100) : 0,
+        },
+      });
+    }
 
     return NextResponse.json(formattedTasks);
   } catch (error) {

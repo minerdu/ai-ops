@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import styles from './MaterialSelector.module.css';
+import { apiFetch } from '@/lib/basePath';
 
 const fallbackMaterials = [
   {
@@ -39,7 +40,7 @@ export default function MaterialSelector({ onClose, onSelect }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/materials')
+    apiFetch('/api/materials', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data && data.length > 0) {

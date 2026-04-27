@@ -56,9 +56,11 @@
   outline: none;
   transition: border-color 0.2s;
 }
+
 .input:focus {
   border-color: var(--color-primary, #07C160);
 }
+
 .input::placeholder {
   color: var(--color-text-tertiary, #555);
 }
@@ -71,7 +73,7 @@
   flex-wrap: wrap;
 }
 
-.testBtn, .syncBtn {
+.testBtn {
   padding: 8px 16px;
   border-radius: 8px;
   border: 1px solid var(--color-primary, #07C160);
@@ -82,11 +84,13 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-.testBtn:hover, .syncBtn:hover {
+
+.testBtn:hover {
   background: var(--color-primary, #07C160);
   color: white;
 }
-.testBtn:disabled, .syncBtn:disabled {
+
+.testBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -109,104 +113,6 @@
   margin: 4px 16px;
 }
 
-.syncSection {
-  padding: 12px 16px;
-}
-
-.toggleRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.toggleLabel {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary, #e0e0e0);
-  display: block;
-}
-
-.toggleDesc {
-  font-size: 11px;
-  color: var(--color-text-tertiary, #888);
-  display: block;
-  margin-top: 2px;
-}
-
-.toggleSwitch {
-  position: relative;
-  display: inline-flex;
-}
-.toggleSwitch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-  position: absolute;
-}
-.toggleSwitch label {
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
-  background: var(--color-border, #333);
-  cursor: pointer;
-  position: relative;
-  transition: background 0.3s;
-}
-.toggleSwitch label::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: white;
-  transition: transform 0.3s;
-}
-.toggleSwitch input:checked + label {
-  background: var(--color-primary, #07C160);
-}
-.toggleSwitch input:checked + label::after {
-  transform: translateX(20px);
-}
-
-.syncOptions {
-  margin-bottom: 12px;
-}
-
-.radioGroup {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.radioBtn {
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--color-border-light, rgba(255,255,255,0.12));
-  background: var(--color-bg-card, rgba(255,255,255,0.04));
-  color: var(--color-text-secondary, #aaa);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.radioBtn:hover {
-  border-color: var(--color-primary, #07C160);
-}
-
-.radioActive {
-  background: var(--color-primary, #07C160);
-  color: white;
-  border-color: var(--color-primary, #07C160);
-}
-
-.lastSync {
-  font-size: 11px;
-  color: var(--color-text-tertiary, #888);
-  margin-bottom: 8px;
-}
-
 .saveBtn {
   display: block;
   width: calc(100% - 32px);
@@ -221,10 +127,130 @@
   cursor: pointer;
   transition: opacity 0.2s;
 }
+
 .saveBtn:hover {
   opacity: 0.9;
 }
+
 .saveBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.integrationList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.crmCard {
+  border-radius: 12px;
+  border: 1px solid var(--color-border-light, rgba(0,0,0,0.08));
+  background: var(--color-bg-card, #fff);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.crmCardActive {
+  border-color: var(--color-primary, #07C160);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.crmHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  background: var(--color-bg-card, #fff);
+}
+
+.crmIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.crmInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.crmName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary, #333);
+  margin: 0 0 4px 0;
+}
+
+.crmDesc {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #888);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.crmRadio {
+  flex-shrink: 0;
+}
+
+.crmRadio input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary, #07C160);
+  cursor: pointer;
+}
+
+.crmConfigArea {
+  padding: 16px;
+  border-top: 1px solid var(--color-border-light, rgba(0,0,0,0.06));
+  background: var(--color-bg-sub, #F8FAFC);
+}
+
+.configNotice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  color: #1D4ED8;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.inputReadOnly {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(0,0,0,0.04);
+  color: var(--color-text-secondary, #666);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+}
+
+.copyBtn {
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light, rgba(0,0,0,0.1));
+  background: #fff;
+  color: var(--color-text-secondary, #666);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.copyBtn:hover {
+  background: rgba(0,0,0,0.02);
 }

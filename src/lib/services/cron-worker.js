@@ -22,7 +22,8 @@ const POLL_INTERVAL_MS = 60_000; // 60 秒轮询一次
 function getBaseUrl() {
   // 在 Server-side Next.js 中，直接使用 localhost
   const port = process.env.PORT || 3000;
-  return `http://localhost:${port}`;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  return `http://localhost:${port}${basePath}`;
 }
 
 /**

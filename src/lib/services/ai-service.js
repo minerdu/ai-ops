@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { enqueue, cancel, hasQueuedMessages } from './message-queue';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 /**
  * 从数据库加载 AI 模型配置

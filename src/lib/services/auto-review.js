@@ -6,9 +6,7 @@
  * - manual_command（人工指令）→ 检查财务关键词/金额 → 决定通过或人工审批
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 // --------------------------------------------------------
 // 审核规则

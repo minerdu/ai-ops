@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/common/Toast';
 import styles from './SafetyFilters.module.css';
+import { apiFetch } from '@/lib/basePath';
 
 /**
  * 安全规则/红线配置组件
@@ -25,7 +26,7 @@ export default function SafetyFilters() {
   const loadRules = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/safety-rules');
+      const res = await apiFetch('/api/safety-rules', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setRules(data);
@@ -47,7 +48,7 @@ export default function SafetyFilters() {
   const addRule = async (ruleType, value) => {
     if (!value.trim()) return;
     try {
-      const res = await fetch('/api/safety-rules', {
+      const res = await apiFetch('/api/safety-rules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ruleType, value: value.trim() }),
@@ -67,7 +68,7 @@ export default function SafetyFilters() {
 
   const deleteRule = async (id) => {
     try {
-      const res = await fetch(`/api/safety-rules?id=${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/safety-rules?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('已删除');
         loadRules();
@@ -79,7 +80,7 @@ export default function SafetyFilters() {
 
   const toggleRule = async (id, isActive) => {
     try {
-      await fetch('/api/safety-rules', {
+      await apiFetch('/api/safety-rules', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, isActive }),

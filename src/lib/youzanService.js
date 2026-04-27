@@ -10,9 +10,7 @@
  * https://open.youzanyun.com/api/{接口名}/{版本号}?access_token={token}
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 const YOUZAN_TOKEN_URL = 'https://open.youzanyun.com/auth/token';
 const YOUZAN_API_BASE = 'https://open.youzanyun.com/api';

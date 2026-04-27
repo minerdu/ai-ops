@@ -1,12 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/components/common/Toast';
-import useStore from '@/lib/store';
 import SystemStatusPanel from '@/components/settings/SystemStatusPanel';
 import SafetyFilters from '@/components/settings/SafetyFilters';
 import YouzanConfigPanel from '@/components/settings/YouzanConfigPanel';
+import OperationDocsView from '@/components/settings/OperationDocsView';
+import OperationAccountManagementView from '@/components/settings/OperationAccountManagementView';
+import OperationLoginChoiceView from '@/components/settings/OperationLoginChoiceView';
+import OperationSkillCenterView from '@/components/settings/OperationSkillCenterView';
+import OperationSopModelingView from '@/components/settings/OperationSopModelingView';
+import OperationMetricsAlertsView from '@/components/settings/OperationMetricsAlertsView';
 import styles from './page.module.css';
+import reportStyles from '../reports/page.module.css';
+import { apiFetch } from '@/lib/basePath';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Legend } from 'recharts';
 
 // ==============================
 // Mock data for QA
@@ -17,13 +25,24 @@ const mockQA = [
   { id: 3, question: '可以退款吗？', answer: '如对服务不满意，7天内可申请退款。已使用的项目按单次价格结算后退还差额。', score: '★★★★★' },
 ];
 
+function formatRate(rate) {
+  if (!Number.isFinite(rate) || rate <= 0) return '0%';
+  if (rate >= 100) return '100%';
+  return `${rate}%`;
+}
+
 export default function SettingsPage() {
   const [viewState, setViewState] = useState('list');
-  const setActiveMainPanel = useStore(s => s.setActiveMainPanel);
   const [persona, setPersona] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState({});
+  const [reportData, setReportData] = useState(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [selectedReportDate, setSelectedReportDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const toast = useToast();
 
   // ==============================
@@ -133,6 +152,8 @@ export default function SettingsPage() {
   // Report view mode
   // ==============================
   const [reportViewMode, setReportViewMode] = useState('day'); // day, week, month
+  const detailContentRef = useRef(null);
+  const listContentRef = useRef(null);
 
   // ==============================
   // API Loaders
@@ -242,18 +263,68 @@ export default function SettingsPage() {
   const loadPersona = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/settings/persona');
+      const res = await apiFetch('/api/settings/persona', { cache: 'no-store' });
       if (res.ok) setPersona(await res.json());
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   };
+
+  useEffect(() => {
+    const resetScroll = () => {
+      if (viewState === 'list') {
+        listContentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      } else {
+        detailContentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      }
+
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    };
+
+    const rafId = window.requestAnimationFrame(resetScroll);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [viewState]);
+
+  useEffect(() => {
+    if (viewState === 'operationReport') {
+      let cancelled = false;
+
+      const run = async () => {
+        setReportLoading(true);
+        try {
+          const res = await apiFetch(`/api/reports/daily?date=${selectedReportDate}&viewMode=${reportViewMode}`, { cache: 'no-store' });
+          if (!res.ok) throw new Error(`Failed to load report: ${res.status}`);
+          const data = await res.json();
+          if (!cancelled) {
+            setReportData(data);
+          }
+        } catch (e) {
+          console.error(e);
+          if (!cancelled) {
+            toast.error('加载运营日报失败');
+          }
+        } finally {
+          if (!cancelled) {
+            setReportLoading(false);
+          }
+        }
+      };
+
+      void run();
+
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [viewState, selectedReportDate, reportViewMode, toast]);
 
   const handleChange = (field, val) => setPersona(p => ({ ...p, [field]: val }));
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch('/api/settings/persona', {
+      const res = await apiFetch('/api/settings/persona', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(persona),
@@ -284,7 +355,11 @@ export default function SettingsPage() {
     momentsLikeComment: '点赞评论设置',
     momentsFollow: '朋友圈跟随',
     accountManagement: '账号管理',
+    operationSkillCenter: 'Skill中心',
+    operationSopModeling: '运营SOP建模',
+    operationMetricsAlerts: '指标与预警',
     operationReport: '运营报告',
+    operationDocs: '运营文档',
     loginChoice: '登录选择',
   };
 
@@ -302,12 +377,32 @@ export default function SettingsPage() {
   if (viewState !== 'list') {
     return (
       <div className={styles.settingsPage}>
-        <div className={styles.header}>
-          <button className={styles.backBtnIOS} onClick={() => setViewState(getBackTarget(viewState))}>
-            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            <span className={styles.backBtnText}>返回</span>
-          </button>
-          <h2 className={styles.title}>{viewTitles[viewState] || '设置'}</h2>
+        <div className={styles.header} style={{ justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <button className={styles.backBtnIOS} onClick={() => setViewState(getBackTarget(viewState))}>
+              <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <span className={styles.backBtnText}>返回</span>
+            </button>
+            <h2 className={styles.title}>{viewTitles[viewState] || '设置'}</h2>
+          </div>
+          {viewState === 'operationReport' ? (
+            <input
+              type="date"
+              value={selectedReportDate}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setSelectedReportDate(e.target.value)}
+              style={{
+                border: '1px solid var(--color-border)',
+                borderRadius: '16px',
+                padding: '12px 16px',
+                color: 'var(--color-text-primary)',
+                background: '#fff',
+                fontSize: '14px',
+                minWidth: '180px',
+                flexShrink: 0,
+              }}
+            />
+          ) : null}
         </div>
 
         {/* =================== AI 员工设置 (截图1复刻) =================== */}
@@ -1094,128 +1189,203 @@ export default function SettingsPage() {
         /* =================== 账号管理 =================== */
         ) : viewState === 'accountManagement' ? (
           <div className={styles.content}>
-            <div className={styles.agentFormContainer}>
-              <div className={styles.sectionBanner}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" style={{color: 'var(--color-primary)'}}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>主账号信息</span></div>
-              <div className={styles.agentFormSection} style={{ padding: '16px', backgroundColor: '#F0FDF4', borderRadius: '8px', marginBottom: '8px' }}>
-                <span className={styles.agentFormLabel} style={{ color: '#10B981' }}>账号名称</span>
-                <input type="text" className={styles.agentFormInput} defaultValue="氧颜轻医美" />
-              </div>
-              <div className={styles.agentFormSection} style={{ padding: '16px', backgroundColor: '#EFF6FF', borderRadius: '8px', marginBottom: '8px' }}>
-                <span className={styles.agentFormLabel} style={{ color: '#3B82F6' }}>联系手机号</span>
-                <input type="tel" className={styles.agentFormInput} defaultValue="13800138000" />
-              </div>
-              <div className={styles.agentFormSection} style={{ padding: '16px', backgroundColor: '#FEF2F2', borderRadius: '8px', marginBottom: '8px' }}>
-                <span className={styles.agentFormLabel} style={{ color: '#EF4444' }}>登录邮箱</span>
-                <input type="text" className={styles.agentFormInput} defaultValue="admin@yuexin.com" readOnly />
-              </div>
-              <div className={styles.agentFormSection} style={{ padding: '16px', backgroundColor: '#F3F4F6', borderRadius: '8px', marginBottom: '8px' }}>
-                <span className={styles.agentFormLabel} style={{ color: '#4B5563' }}>角色</span>
-                <input type="text" className={styles.agentFormInput} defaultValue="管理员（主账号）" readOnly />
-              </div>
-            </div>
-
-            <div className={styles.agentFormContainer}>
-              <div className={styles.sectionBanner}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" style={{color: 'var(--color-primary)'}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>子账号管理</span></div>
-              {[
-                { name: 'AI顾问-门店1', perm: '线索管理、消息回复', status: '在线', tag: '企微' },
-                { name: 'AI顾问-门店2', perm: '线索管理、消息回复', status: '在线', tag: '个微' },
-                { name: 'AI顾问-门店3', perm: '素材管理、工作流', status: '离线', tag: '企微' },
-              ].map((acc, i) => (
-                <div key={i} className={styles.subAccountCard}>
-                  <div className={styles.subAccountInfo}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className={styles.subAccountName}>{acc.name}</span>
-                      <span style={{ fontSize: '10px', padding: '2px 6px', background: 'var(--color-primary-bg)', color: 'var(--color-primary)', borderRadius: '4px', fontWeight: '500' }}>
-                        {acc.tag}
-                      </span>
-                    </div>
-                    <span className={styles.subAccountPerm}>{acc.perm}</span>
-                  </div>
-                  <span className={`${styles.subAccountStatus} ${acc.status === '在线' ? styles.statusOnline : ''}`}>
-                    {acc.status}
-                  </span>
-                </div>
-              ))}
-              <button className={styles.agentSaveBtn} style={{ background: 'var(--color-bg-section)', color: 'var(--color-primary)', border: '1px dashed var(--color-primary)' }}
-                onClick={() => toast('添加子账号功能即将上线')}>
-                ＋ 添加子账号
-              </button>
-            </div>
+            <OperationAccountManagementView />
           </div>
 
         /* =================== 运营报告 =================== */
         ) : viewState === 'operationReport' ? (
+          <div className={reportStyles.content}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className={styles.viewTabs} style={{ marginBottom: 0 }}>
+                {['day', 'week', 'month'].map(v => (
+                  <button
+                    key={v}
+                    className={`${styles.viewTab} ${reportViewMode === v ? styles.viewTabActive : ''}`}
+                    onClick={() => setReportViewMode(v)}
+                  >
+                    {v === 'day' ? '今日' : v === 'week' ? '本周' : '本月'}
+                  </button>
+                ))}
+              </div>
+
+              {reportLoading || !reportData ? (
+                <div className={styles.agentFormContainer}>
+                  <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+                    加载运营日报中...
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className={`${reportStyles.card} animate-fadeInUp`}>
+                    <h3 className={reportStyles.cardTitle}>
+                      {reportViewMode === 'day' ? '过去24小时运营概览' : reportViewMode === 'week' ? '本周运营概览' : '本月运营概览'}
+                    </h3>
+                    <div className={reportStyles.statsGrid}>
+                      <div className={reportStyles.statBox}>
+                        <span className={reportStyles.statNum}>{reportData.totalCustomers}</span>
+                        <span className={reportStyles.statLabel}>客户总数</span>
+                      </div>
+                      <div className={reportStyles.statBox}>
+                        <span className={reportStyles.statNum}>{reportData.newCustomers}</span>
+                        <span className={reportStyles.statLabel}>新增客户</span>
+                      </div>
+                      <div className={reportStyles.statBox}>
+                        <span className={reportStyles.statNum}>{reportData.totalMessages}</span>
+                        <span className={reportStyles.statLabel}>收到消息</span>
+                      </div>
+                      <div className={reportStyles.statBox}>
+                        <span className={reportStyles.statNum}>{reportData.sentMessages}</span>
+                        <span className={reportStyles.statLabel}>发送消息</span>
+                      </div>
+                      <div className={reportStyles.statBox}>
+                        <span className={reportStyles.statNum}>{reportData.aiReplies}</span>
+                        <span className={reportStyles.statLabel}>AI回复</span>
+                      </div>
+                      <div className={reportStyles.statBox}>
+                        <span className={reportStyles.statNum}>{formatRate(reportData.responseWithin60Rate)}</span>
+                        <span className={reportStyles.statLabel}>60秒内响应率</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                    <div className={`${reportStyles.card} animate-fadeInUp delay-100`}>
+                      <h3 className={reportStyles.cardTitle}>📈 会话趋势分析</h3>
+                      <div style={{ width: '100%', height: 260, marginTop: '24px' }}>
+                        <ResponsiveContainer>
+                          <AreaChart data={reportData.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-light)" />
+                            <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }} />
+                            <Tooltip
+                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                              itemStyle={{ fontSize: '13px' }}
+                              labelStyle={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '4px' }}
+                            />
+                            <Legend iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
+                            <Area type="monotone" dataKey="messages" name="总消息" stroke="var(--color-primary)" fill="var(--color-primary-bg)" strokeWidth={3} />
+                            <Area type="monotone" dataKey="aiReplies" name="AI回复" stroke="#10b981" fill="#ecfdf5" strokeWidth={3} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    <div className={`${reportStyles.card} animate-fadeInUp delay-100`}>
+                      <h3 className={reportStyles.cardTitle}>🔻 转化漏斗分析</h3>
+                      <div style={{ width: '100%', height: 260, marginTop: '24px' }}>
+                        <ResponsiveContainer>
+                          <BarChart data={reportData.funnelData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 13, fontWeight: 500, fill: 'var(--color-text-primary)' }} width={60} />
+                            <Tooltip
+                              cursor={{ fill: 'var(--color-bg-section)' }}
+                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            />
+                            <Bar dataKey="value" name="客户数量" fill="var(--color-primary)" radius={[0, 4, 4, 0]} barSize={24} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`${reportStyles.card} animate-fadeInUp delay-100`}>
+                    <h3 className={reportStyles.cardTitle}>🔑 对话高频关键词</h3>
+                    <div className={reportStyles.keywords}>
+                      {(reportData.highFreqKeywords || []).map((kw, i) => (
+                        <span
+                          key={kw}
+                          className={reportStyles.keyword}
+                          style={{ fontSize: `${Math.max(14, 20 - i * 2)}px`, opacity: 1 - i * 0.08 }}
+                        >
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={`${reportStyles.card} animate-fadeInUp delay-200`}>
+                    <h3 className={reportStyles.cardTitle}>⚡ 建议重点关注客户</h3>
+                    <div className={reportStyles.keyCustomers}>
+                      {(reportData.keyCustomers || []).map((c, i) => (
+                        <div key={`${c.name}-${i}`} className={reportStyles.keyCustomerItem}>
+                          <div className={reportStyles.kcInfo}>
+                            <span className={reportStyles.kcName}>{c.name}</span>
+                            <span className={reportStyles.kcReason}>{c.reason}</span>
+                          </div>
+                          <button className={reportStyles.kcAction}>{c.action}</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={`${reportStyles.card} animate-fadeInUp delay-300`}>
+                    <h3 className={reportStyles.cardTitle}>📋 待审批</h3>
+                    <div className={reportStyles.approvalList}>
+                      <div className={reportStyles.approvalItem}>
+                        <span className={reportStyles.approvalLabel}>自动打标签审批</span>
+                        <span className={reportStyles.approvalCount}>{reportData.pendingTagApprovals}个</span>
+                      </div>
+                      <div className={reportStyles.approvalItem}>
+                        <span className={reportStyles.approvalLabel}>跟进任务审批</span>
+                        <span className={reportStyles.approvalCount}>{reportData.pendingTaskApprovals}个</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`${reportStyles.card} ${reportStyles.aiCard} animate-fadeInUp delay-300`}>
+                    <h3 className={reportStyles.cardTitle}>🤖 AI经营总结</h3>
+                    <p className={reportStyles.aiSummary}>{reportData.aiSummary}</p>
+                  </div>
+
+                  <div className={`${reportStyles.card} animate-fadeInUp delay-300`}>
+                    <h3 className={reportStyles.cardTitle}>💡 AI经营建议</h3>
+                    <div className={reportStyles.suggestions}>
+                      {(reportData.aiSuggestions || []).map((s, i) => (
+                        <div key={`${s.title}-${i}`} className={reportStyles.suggestionItem}>
+                          <div className={reportStyles.sugInfo}>
+                            <span className={reportStyles.sugTitle}>{s.title}</span>
+                            <span className={reportStyles.sugDesc}>{s.desc}</span>
+                          </div>
+                          <button className={reportStyles.sugAction}>{s.link}</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+        /* =================== 运营文档 =================== */
+        ) : viewState === 'operationDocs' ? (
           <div className={styles.content}>
-            <div className={styles.viewTabs}>
-              {['day', 'week', 'month'].map(v => (
-                <button key={v}
-                  className={`${styles.viewTab} ${reportViewMode === v ? styles.viewTabActive : ''}`}
-                  onClick={() => setReportViewMode(v)}>
-                  {v === 'day' ? '今日' : v === 'week' ? '本周' : '本月'}
-                </button>
-              ))}
+            <div className={styles.agentFormContainer} style={{ padding: 0, overflow: 'hidden' }}>
+              <OperationDocsView />
             </div>
-            <div className={styles.agentFormContainer}>
-              <div className={styles.reportGrid}>
-                <div className={styles.reportCard} style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0284C7', marginBottom: '8px' }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M12 20V10"/><path d="m18 14-6-6-6 6"/></svg>
-                    <span className={styles.reportLabel} style={{ marginTop: 0, color: '#0284C7', fontWeight: 600 }}>新增线索</span>
-                  </span>
-                  <span className={styles.reportNum} style={{ color: '#0369A1' }}>47</span>
-                </div>
-                <div className={styles.reportCard} style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#059669', marginBottom: '8px' }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    <span className={styles.reportLabel} style={{ marginTop: 0, color: '#059669', fontWeight: 600 }}>AI 回复</span>
-                  </span>
-                  <span className={styles.reportNum} style={{ color: '#047857' }}>324</span>
-                </div>
-                <div className={styles.reportCard} style={{ background: '#FFFBEB', border: '1px solid #FDE68A', display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#D97706', marginBottom: '8px' }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span className={styles.reportLabel} style={{ marginTop: 0, color: '#D97706', fontWeight: 600 }}>待审核任务</span>
-                  </span>
-                  <span className={styles.reportNum} style={{ color: '#B45309' }}>12</span>
-                </div>
-                <div className={styles.reportCard} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#7C3AED', marginBottom: '8px' }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span className={styles.reportLabel} style={{ marginTop: 0, color: '#7C3AED', fontWeight: 600 }}>AI 处理率</span>
-                  </span>
-                  <span className={styles.reportNum} style={{ color: '#6D28D9' }}>89%</span>
-                </div>
-              </div>
-              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
-                📊 详细报告图表功能开发中...
-              </div>
-            </div>
+          </div>
+
+        /* =================== Skill中心 =================== */
+        ) : viewState === 'operationSkillCenter' ? (
+          <div key={viewState} ref={detailContentRef} className={styles.content}>
+            <OperationSkillCenterView />
+          </div>
+
+        /* =================== 运营SOP建模 =================== */
+        ) : viewState === 'operationSopModeling' ? (
+          <div key={viewState} ref={detailContentRef} className={styles.content}>
+            <OperationSopModelingView />
+          </div>
+
+        /* =================== 指标与预警 =================== */
+        ) : viewState === 'operationMetricsAlerts' ? (
+          <div key={viewState} ref={detailContentRef} className={styles.content}>
+            <OperationMetricsAlertsView />
           </div>
 
         /* =================== 登录选择 =================== */
         ) : viewState === 'loginChoice' ? (
           <div className={styles.content}>
-            <div className={styles.agentFormContainer}>
-              <div className={styles.agentFormSection}>
-                <span className={styles.agentFormLabel}>当前账号</span>
-                <div style={{ padding: '12px', background: 'var(--color-bg-section)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '32px' }}>👤</span>
-                  <div>
-                    <div style={{ fontWeight: '600', color: 'var(--color-primary)' }}>氧颜轻医美</div>
-                    <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>admin@yuexin.com · 管理员</div>
-                  </div>
-                </div>
-              </div>
-
-              <button className={styles.agentSaveBtn} style={{ background: '#f5f5f5', color: 'var(--color-text-primary)' }}
-                onClick={() => toast('切换账号功能即将上线')}>
-                🔄 切换账号
-              </button>
-              <button className={styles.agentSaveBtn} style={{ background: '#fff1f0', color: '#cf1322' }}
-                onClick={() => toast('确认退出？')}>
-                🚪 退出登录
-              </button>
-            </div>
+            <OperationLoginChoiceView />
           </div>
 
         /* =================== 通用 fallback =================== */
@@ -1237,7 +1407,7 @@ export default function SettingsPage() {
         <h2 className={styles.title}>设置</h2>
       </div>
 
-      <div className={styles.listContent}>
+      <div ref={listContentRef} className={styles.listContent}>
         {/* ① 系统状态面板 */}
         <div className={styles.listGroup}>
           <SystemStatusPanel />
@@ -1279,7 +1449,35 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* ③ AI 运营配置 */}
+        {/* ③ 标杆企业Skill设置 */}
+        <div className={styles.listGroup}>
+          <div className={styles.groupHead}>标杆企业Skill设置</div>
+          <div className={styles.groupItems}>
+            <div className={styles.listItem} onClick={() => setViewState('operationSkillCenter')}>
+              <div className={styles.itemLeft}>
+                <span className={styles.itemIcon} style={{color: '#f59e0b'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                <span className={styles.itemName}>Skill中心</span>
+              </div>
+              <span className={styles.itemArrow}>›</span>
+            </div>
+            <div className={styles.listItem} onClick={() => setViewState('operationSopModeling')}>
+              <div className={styles.itemLeft}>
+                <span className={styles.itemIcon} style={{color: '#14b8a6'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+                <span className={styles.itemName}>运营SOP建模</span>
+              </div>
+              <span className={styles.itemArrow}>›</span>
+            </div>
+            <div className={styles.listItem} onClick={() => setViewState('operationMetricsAlerts')}>
+              <div className={styles.itemLeft}>
+                <span className={styles.itemIcon} style={{color: '#10b981'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                <span className={styles.itemName}>指标与预警</span>
+              </div>
+              <span className={styles.itemArrow}>›</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ④ AI 运营配置 */}
         <div className={styles.listGroup}>
           <div className={styles.groupHead}>AI 运营配置</div>
           <div className={styles.groupItems}>
@@ -1290,24 +1488,27 @@ export default function SettingsPage() {
               </div>
               <span className={styles.itemArrow}>›</span>
             </div>
-            <div className={styles.listItem} onClick={() => setActiveMainPanel('reports')}>
+            <div className={styles.listItem} onClick={() => setViewState('operationReport')}>
               <div className={styles.itemLeft}>
                 <span className={styles.itemIcon} style={{color: '#f59e0b'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
                 <span className={styles.itemName}>运营日报</span>
               </div>
               <span className={styles.itemArrow}>›</span>
             </div>
-            <div className={styles.listItem} onClick={() => setActiveMainPanel('materials')}>
+            <div
+              className={styles.listItem}
+              onClick={() => setViewState('operationDocs')}
+            >
               <div className={styles.itemLeft}>
                 <span className={styles.itemIcon} style={{color: '#ec4899'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
-                <span className={styles.itemName}>运营素材</span>
+                <span className={styles.itemName}>运营文档</span>
               </div>
               <span className={styles.itemArrow}>›</span>
             </div>
           </div>
         </div>
 
-        {/* ④ 运营管理 */}
+        {/* ⑤ 运营管理 */}
         <div className={styles.listGroup}>
           <div className={styles.groupHead}>运营管理</div>
           <div className={styles.groupItems}>
